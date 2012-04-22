@@ -1,0 +1,22 @@
+name: Regions
+main: us.camin.regions.Plugin
+author: Trever Fischer <wm161@wm161.net>
+website: http://camin.us/
+version: ${version}
+commands:
+    region:
+        description: Interface to the region system
+        usage: /<command> [args...]
+permissions:
+    regions.*:
+        default: op
+        description: Allows use of all regions permissions
+        children:
+            regions.create: true
+            regions.remove: true
+    regions.create:
+        default: op
+        description: Create a region
+    regions.remove:
+        default: op
+        description: Remove a region
