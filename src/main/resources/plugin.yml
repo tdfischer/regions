@@ -3,6 +3,7 @@ main: us.camin.regions.Plugin
 author: Trever Fischer <wm161@wm161.net>
 website: http://camin.us/
 version: ${version}
+softdepend: [dynmap]
 commands:
     region:
         description: Interface to the region system
