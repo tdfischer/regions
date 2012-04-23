@@ -24,6 +24,8 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.World;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.ConfigurationSection;
+import org.dynmap.markers.MarkerAPI;
+import org.dynmap.DynmapCommonAPI;
 
 import java.util.logging.Logger;
 
@@ -40,8 +42,7 @@ public class Plugin extends JavaPlugin {
 
     public void onEnable() {
         log.info("[Regions] Enabling Regions");
-        m_regions = new RegionManager();
-        loadRegions();
+        m_regions = new RegionManager(getServer().getPluginManager());
 
         m_playerWatcher = new PlayerWatcher(this);
         
@@ -49,6 +50,18 @@ public class Plugin extends JavaPlugin {
 
         CommandExecutor regionCommand = new RegionCommand(this);
         getCommand("region").setExecutor(regionCommand);
+
+        org.bukkit.plugin.Plugin mapPlugin = getServer().getPluginManager().getPlugin("dynmap");
+        if (mapPlugin instanceof DynmapCommonAPI) {
+            DynmapCommonAPI mapAPI = (DynmapCommonAPI)mapPlugin;
+            MarkerAPI markerAPI = mapAPI.getMarkerAPI();
+            RegionEventHandler regionHandler = new RegionEventHandler(markerAPI);
+            getServer().getPluginManager().registerEvents(regionHandler, this);
+        } else {
+            log.info("[Regions] Dynmap not found. Disabling map support.");
+        }
+
+        loadRegions();
     }
 
     private void loadTestRegions() {

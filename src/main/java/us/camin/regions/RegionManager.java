@@ -24,6 +24,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.PluginManager;
 
 import java.util.logging.Logger;
 import java.util.Map;
@@ -37,8 +38,10 @@ import java.util.Set;
 public class RegionManager {
     Logger log = Logger.getLogger("Regions.RegionManager");
     private Map<String, Collection<Region>> m_regions;
+    private PluginManager m_pm;
 
-    public RegionManager() {
+    public RegionManager(PluginManager pm) {
+        m_pm = pm;
         m_regions = new HashMap<String, Collection<Region>>();
     }
 
@@ -56,14 +59,20 @@ public class RegionManager {
         log.fine("Adding new region "+r.name()+" at "+r.location());
         if (!m_regions.containsKey(worldName))
             m_regions.put(worldName, new ArrayList<Region>());
-        return m_regions.get(worldName).add(r);
+        if (m_regions.get(worldName).add(r)) {
+            m_pm.callEvent(new RegionEvent(r, RegionEvent.EventType.Added));
+        }
+        return false;
     }
 
     public boolean removeRegion(Region r) {
         String worldName = r.location().getWorld().getName();
         log.fine("Removing region "+r.name()+" from "+r.location());
         if (m_regions.containsKey(worldName)) {
-            return m_regions.get(worldName).remove(r);
+            if (m_regions.get(worldName).remove(r)) {
+                m_pm.callEvent(new RegionEvent(r, RegionEvent.EventType.Removed));
+            }
+            return true;
         }
         return false;
     }
