@@ -43,6 +43,7 @@ public class CityRegionCommand implements CommandExecutor {
         if (city != null) {
             if (p.getLocation().distance(nearest.teleportLocation()) <= 5) {
                 p.teleport(city.teleportLocation(), TeleportCause.COMMAND);
+                m_plugin.recalculatePlayerRegions();
             } else {
                 sender.sendMessage("You must be within 5 blocks of a region center.");
             }
