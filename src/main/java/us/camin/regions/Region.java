@@ -33,6 +33,10 @@ public class Region {
         return m_location;
     }
 
+    public Location teleportLocation() {
+        return m_location.getWorld().getHighestBlockAt(m_location).getLocation();
+    }
+
     public String name() {
         return m_name;
     }

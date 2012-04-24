@@ -22,6 +22,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Location;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.World;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.dynmap.markers.MarkerAPI;
@@ -50,13 +52,20 @@ public class Plugin extends JavaPlugin {
 
         CommandExecutor regionCommand = new RegionCommand(this);
         getCommand("region").setExecutor(regionCommand);
+        getCommand("cityregion").setExecutor(new CityRegionCommand(this));
+        getCommand("homeregion").setExecutor(new HomeRegionCommand(this));
+        getCommand("movein").setExecutor(new MoveinRegionCommand(this));
 
         org.bukkit.plugin.Plugin mapPlugin = getServer().getPluginManager().getPlugin("dynmap");
         if (mapPlugin instanceof DynmapCommonAPI) {
             DynmapCommonAPI mapAPI = (DynmapCommonAPI)mapPlugin;
             MarkerAPI markerAPI = mapAPI.getMarkerAPI();
-            RegionEventHandler regionHandler = new RegionEventHandler(markerAPI);
-            getServer().getPluginManager().registerEvents(regionHandler, this);
+            if (markerAPI != null) {
+                RegionEventHandler regionHandler = new RegionEventHandler(markerAPI);
+                getServer().getPluginManager().registerEvents(regionHandler, this);
+            } else {
+                log.info("[Regions] Dynmap marker API not found. Disabling map support.");
+            }
         } else {
             log.info("[Regions] Dynmap not found. Disabling map support.");
         }
@@ -79,18 +88,34 @@ public class Plugin extends JavaPlugin {
 
     public void loadRegions() {
         reloadConfig();
-        ConfigurationSection section = getConfig().getConfigurationSection("regions");
+        ConfigurationSection section = getConfig().getConfigurationSection("worlds");
         if (section != null)
             m_regions.loadRegions(section, getServer());
     }
 
     public void saveRegions() {
-        m_regions.saveRegions(getConfig().createSection("regions"));
+        m_regions.saveRegions(getConfig().createSection("worlds"));
         saveConfig();
     }
 
     public void onDisable() {
         saveRegions();
         log.info("[Regions] Plugin disabled");
+    }
+
+    public void regenRegionPost(Region r) {
+        World world = r.location().getWorld();
+        Location center = world.getHighestBlockAt(r.location()).getLocation();
+        for(int x = center.getBlockX()-1;x <= center.getBlockX()+1;x++) {
+            for(int z = center.getBlockZ()-1;z <= center.getBlockZ()+1;z++) {
+                Block b = world.getBlockAt(x, center.getBlockY()-1, z);
+                b.setType(Material.COBBLESTONE);
+            }
+        }
+
+        for(int y = center.getBlockY()-2;y < center.getBlockY()+2;y++) {
+            Block b = world.getBlockAt(center.getBlockX(), y, center.getBlockZ());
+            b.setType(Material.GLOWSTONE);
+        }
     }
 }

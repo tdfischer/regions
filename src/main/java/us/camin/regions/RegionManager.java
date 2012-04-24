@@ -38,20 +38,33 @@ import java.util.Set;
 public class RegionManager {
     Logger log = Logger.getLogger("Regions.RegionManager");
     private Map<String, Collection<Region>> m_regions;
+    private Map<String, Region> m_cityRegions;
+    private Map<String, Region> m_homeRegions;
     private PluginManager m_pm;
 
     public RegionManager(PluginManager pm) {
         m_pm = pm;
-        m_regions = new HashMap<String, Collection<Region>>();
+        clear();
     }
 
     public void clear() {
         m_regions = new HashMap<String, Collection<Region>>();
+        m_cityRegions = new HashMap<String, Region>();
+        m_homeRegions = new HashMap<String, Region>();
     }
 
     public void renameWorld(String oldName, String newName) {
         log.fine("Renaming "+oldName+" to "+newName);
         m_regions.put(newName, m_regions.remove(oldName));
+        m_cityRegions.put(newName, m_cityRegions.remove(oldName));
+    }
+
+    public Region cityRegion(String worldName) {
+        return m_cityRegions.get(worldName);
+    }
+
+    public void setCityRegion(String worldName, Region region) {
+        m_cityRegions.put(worldName, region);
     }
 
     public boolean addRegion(Region r) {
@@ -118,31 +131,61 @@ public class RegionManager {
     public void saveRegions(ConfigurationSection section) {
         for(String worldName : m_regions.keySet()) {
             ConfigurationSection worldSection = section.createSection(worldName);
+            Region cityRegion = cityRegion(worldName);
+            if (cityRegion != null)
+                worldSection.set("city", cityRegion.name());
+            ConfigurationSection worldRegionSection = worldSection.createSection("regions");
             for(Region r : regionsForWorld(worldName)) {
-                ConfigurationSection regionSection = worldSection.createSection(r.name());
+                ConfigurationSection regionSection = worldRegionSection.createSection(r.name());
                 regionSection.set("x", r.location().getBlockX());
                 regionSection.set("z", r.location().getBlockZ());
+                ArrayList<String> homePlayers = new ArrayList<String>();
+                for(String player : m_homeRegions.keySet()) {
+                    if (m_homeRegions.get(player) == r) {
+                        homePlayers.add(player);
+                    }
+                }
+                regionSection.set("players", homePlayers);
             }
         }
+    }
+
+    public Region homeRegion(String playerName) {
+        return m_homeRegions.get(playerName);
+    }
+
+    public void setHomeRegion(String player, Region r) {
+        m_homeRegions.put(player, r);
     }
 
     public void loadRegions(ConfigurationSection section, Server server) {
         Set<String> worldNames = section.getKeys(false);
         for(String worldName : worldNames) {
             ConfigurationSection worldSection = section.getConfigurationSection(worldName);
-            Set<String> regionNames = worldSection.getKeys(false);
+            String cityName = worldSection.getString("city");
+            ConfigurationSection worldRegionSection = worldSection.getConfigurationSection("regions");
+            Set<String> regionNames = worldRegionSection.getKeys(false);
             World world = server.getWorld(worldName);
             if (world == null) {
                 log.warning("Could not find world: "+worldName);
                 continue;
             }
             for(String regionName : regionNames) {
-                ConfigurationSection regionSection = worldSection.getConfigurationSection(regionName);
+                ConfigurationSection regionSection = worldRegionSection.getConfigurationSection(regionName);
                 int x = regionSection.getInt("x");
                 int z = regionSection.getInt("z");
                 Location loc = new Location(world, x, 64, z);
                 Region r = new Region(regionName, loc);
                 addRegion(r);
+
+                if (regionName.equals(cityName)) {
+                    m_cityRegions.put(worldName, r);
+                }
+
+                List<String> regionPlayers = regionSection.getStringList("players");
+                for(String player : regionPlayers) {
+                    m_homeRegions.put(player, r);
+                }
             }
         }
     }

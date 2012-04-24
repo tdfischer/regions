@@ -56,6 +56,8 @@ public class RegionCommand implements CommandExecutor {
             regionName.append(split[split.length-1]);
             Region r = new Region(regionName.toString(), p.getLocation());
             m_plugin.regionManager().addRegion(r);
+            m_plugin.regenRegionPost(r);
+            p.teleport(r.teleportLocation());
         } else if (subCommand.equals("remove") && p.hasPermission("regions.remove")) {
             Region r = m_plugin.regionManager().nearestRegion(p.getLocation());
             if (r == null) {
@@ -63,8 +65,20 @@ public class RegionCommand implements CommandExecutor {
                 return true;
             }
             m_plugin.regionManager().removeRegion(r);
+        } else if (subCommand.equals("city") && p.hasPermission("regions.setCity")) {
+            Region r = m_plugin.regionManager().nearestRegion(p.getLocation());
+            if (r == null) {
+                p.sendMessage("There are no regions in this world.");
+                return true;
+            }
+            m_plugin.regionManager().setCityRegion(p.getLocation().getWorld().getName(), r);
+            p.sendMessage("City region set to "+r.name());
+        } else if (subCommand.equals("regen") && p.hasPermission("regions.create")) {
+            Region r = m_plugin.regionManager().nearestRegion(p.getLocation());
+            m_plugin.regenRegionPost(r);
+            p.sendMessage("Region post regenerated.");
         } else {
-            p.sendMessage("Unknown operation. Options are create and remove.");
+            p.sendMessage("Unknown operation. Options are create, remove, city.");
         }
         return true;
     }

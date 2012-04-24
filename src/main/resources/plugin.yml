@@ -8,6 +8,15 @@ commands:
     region:
         description: Interface to the region system
         usage: /<command> [args...]
+    movein:
+        description: "Sets your home region."
+        usage: /<command>
+    cityregion:
+        description: "Teleports you to the world's city region."
+        usage: /<command>
+    homeregion:
+        description: "Teleports you to your home region."
+        usage: /<command>
 permissions:
     regions.*:
         default: op
@@ -15,9 +24,13 @@ permissions:
         children:
             regions.create: true
             regions.remove: true
+            regions.city: true
     regions.create:
         default: op
         description: Create a region
     regions.remove:
         default: op
         description: Remove a region
+    regions.city:
+        default: op
+        description: Defines the city region
