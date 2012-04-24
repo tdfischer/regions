@@ -42,6 +42,10 @@ public class Plugin extends JavaPlugin {
         return m_regions;
     }
 
+    public void recalculatePlayerRegions() {
+        m_playerWatcher.run();
+    }
+
     public void onEnable() {
         log.info("[Regions] Enabling Regions");
         m_regions = new RegionManager(getServer().getPluginManager());
