@@ -38,7 +38,6 @@ public class PlayerWatcher implements Runnable {
     }
 
     public void run() {
-        log.finest("poll");
         Player[] allPlayers = m_plugin.getServer().getOnlinePlayers();
         RegionManager manager = m_plugin.regionManager();
         Map<Region, List<Player>> newPlayers = new HashMap<Region, List<Player>>();
