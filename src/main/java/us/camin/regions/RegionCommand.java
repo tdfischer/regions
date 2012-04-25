@@ -58,7 +58,6 @@ public class RegionCommand implements CommandExecutor {
             m_plugin.regionManager().addRegion(r);
             m_plugin.regenRegionPost(r);
             p.teleport(r.teleportLocation());
-            m_plugin.recalculatePlayerRegions();
         } else if (subCommand.equals("remove") && p.hasPermission("regions.remove")) {
             Region r = m_plugin.regionManager().nearestRegion(p.getLocation());
             if (r == null) {
@@ -66,7 +65,6 @@ public class RegionCommand implements CommandExecutor {
                 return true;
             }
             m_plugin.regionManager().removeRegion(r);
-            m_plugin.recalculatePlayerRegions();
         } else if (subCommand.equals("city") && p.hasPermission("regions.setCity")) {
             Region r = m_plugin.regionManager().nearestRegion(p.getLocation());
             if (r == null) {
