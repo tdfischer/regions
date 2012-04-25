@@ -73,7 +73,7 @@ public class RegionManager {
         if (!m_regions.containsKey(worldName))
             m_regions.put(worldName, new ArrayList<Region>());
         if (m_regions.get(worldName).add(r)) {
-            m_pm.callEvent(new RegionEvent(r, RegionEvent.EventType.Added));
+            m_pm.callEvent(new RegionCreateEvent(r));
         }
         return false;
     }
@@ -83,7 +83,7 @@ public class RegionManager {
         log.fine("Removing region "+r.name()+" from "+r.location());
         if (m_regions.containsKey(worldName)) {
             if (m_regions.get(worldName).remove(r)) {
-                m_pm.callEvent(new RegionEvent(r, RegionEvent.EventType.Removed));
+                m_pm.callEvent(new RegionRemoveEvent(r));
             }
             return true;
         }

@@ -21,15 +21,13 @@ package us.camin.regions;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-public abstract class RegionEvent extends Event {
-    private static final HandlerList s_handlers = new HandlerList();
-    public final Region region;
+public class RegionCreateEvent extends RegionEvent {
+    public static final HandlerList s_handlers = new HandlerList();
 
-    public RegionEvent(Region region) {
-        this.region = region;
+    public RegionCreateEvent(Region region) {
+        super(region);
     }
 
-    @Override
     public HandlerList getHandlers() {
         return s_handlers;
     }

@@ -36,14 +36,15 @@ public class RegionEventHandler implements Listener {
     }
 
     @EventHandler
-    public void onRegionEvent(RegionEvent event) {
-        if (event.type == RegionEvent.EventType.Added) {
-            Location loc = event.region.location();
-            MarkerIcon icon = m_api.getMarkerIcon("default");
-            m_set.createMarker(null, event.region.name(), loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ(), icon, false);
-        } else if (event.type == RegionEvent.EventType.Removed) {
-            Marker marker = m_set.findMarkerByLabel(event.region.name());
-            marker.deleteMarker();
-        }
+    public void onRegionEvent(RegionRemoveEvent event) {
+        Marker marker = m_set.findMarkerByLabel(event.region.name());
+        marker.deleteMarker();
+    }
+
+    @EventHandler
+    public void onRegionEvent(RegionCreateEvent event) {
+        Location loc = event.region.location();
+        MarkerIcon icon = m_api.getMarkerIcon("default");
+        m_set.createMarker(null, event.region.name(), loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ(), icon, false);
     }
 }
