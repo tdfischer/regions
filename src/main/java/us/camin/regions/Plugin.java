@@ -60,6 +60,8 @@ public class Plugin extends JavaPlugin {
         getCommand("homeregion").setExecutor(new HomeRegionCommand(this));
         getCommand("movein").setExecutor(new MoveinRegionCommand(this));
 
+        getServer().getPluginManager().registerEvents(new BukkitEventHandler(this), this);
+
         org.bukkit.plugin.Plugin mapPlugin = getServer().getPluginManager().getPlugin("dynmap");
         if (mapPlugin instanceof DynmapCommonAPI) {
             DynmapCommonAPI mapAPI = (DynmapCommonAPI)mapPlugin;
