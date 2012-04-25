@@ -18,16 +18,28 @@ package us.camin.regions;
  *
  */
 
-import java.lang.Runnable;
+import org.bukkit.event.Event;
+import org.bukkit.event.HandlerList;
+import org.bukkit.entity.Player;
 
-public class PlayerWatcher implements Runnable {
-    private RegionManager m_manager;
+public class PlayerRegionChangeEvent extends Event {
+    private static final HandlerList s_handlers = new HandlerList();
+    public final Region oldRegion;
+    public final Region newRegion;
+    public final Player player;
 
-    public PlayerWatcher(RegionManager manager) {
-        m_manager = manager;
+    public PlayerRegionChangeEvent(Player p, Region oldRegion, Region newRegion) {
+        this.oldRegion = oldRegion;
+        this.newRegion = newRegion;
+        this.player = p;
     }
 
-    public void run() {
-        m_manager.recalculatePlayerRegions();
+    @Override
+    public HandlerList getHandlers() {
+        return s_handlers;
+    }
+
+    public static HandlerList getHandlerList() {
+        return s_handlers;
     }
 }

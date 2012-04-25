@@ -26,6 +26,8 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.plugin.ServicePriority;
+import org.bukkit.plugin.ServicesManager;
 import org.dynmap.markers.MarkerAPI;
 import org.dynmap.DynmapCommonAPI;
 
@@ -42,15 +44,11 @@ public class Plugin extends JavaPlugin implements RegionAPI {
         return m_regions;
     }
 
-    public void recalculatePlayerRegions() {
-        m_playerWatcher.run();
-    }
-
     public void onEnable() {
         log.info("[Regions] Enabling Regions");
-        m_regions = new RegionManager(getServer().getPluginManager());
+        m_regions = new RegionManager(getServer());
 
-        m_playerWatcher = new PlayerWatcher(this);
+        m_playerWatcher = new PlayerWatcher(m_regions);
         
         getServer().getScheduler().scheduleAsyncRepeatingTask(this, m_playerWatcher, 0, 5*20);
 
@@ -60,7 +58,7 @@ public class Plugin extends JavaPlugin implements RegionAPI {
         getCommand("homeregion").setExecutor(new HomeRegionCommand(this));
         getCommand("movein").setExecutor(new MoveinCommand(this));
 
-        getServer().getPluginManager().registerEvents(new BukkitEventHandler(this), this);
+        getServer().getPluginManager().registerEvents(new BukkitEventHandler(m_regions), this);
 
         org.bukkit.plugin.Plugin mapPlugin = getServer().getPluginManager().getPlugin("dynmap");
         if (mapPlugin instanceof DynmapCommonAPI) {
@@ -75,6 +73,9 @@ public class Plugin extends JavaPlugin implements RegionAPI {
         } else {
             log.info("[Regions] Dynmap not found. Disabling map support.");
         }
+
+        ServicesManager sm = getServer().getServicesManager();
+        sm.register(RegionAPI.class, this, this, ServicePriority.Normal);
 
         loadRegions();
     }
@@ -98,7 +99,7 @@ public class Plugin extends JavaPlugin implements RegionAPI {
         m_regions.clear();
         if (section != null)
             m_regions.loadRegions(section, getServer());
-        recalculatePlayerRegions();
+        m_regions.recalculatePlayerRegions();
     }
 
     public void saveRegions() {

@@ -44,7 +44,6 @@ public class HomeRegionCommand implements CommandExecutor {
         if (home != null) {
             if (p.getLocation().distance(nearest.teleportLocation()) <= 5) {
                 p.teleport(home.teleportLocation(), TeleportCause.COMMAND);
-                m_plugin.recalculatePlayerRegions();
             } else {
                 sender.sendMessage("You must be within 5 blocks of a region center.");
             }

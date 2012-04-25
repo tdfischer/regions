@@ -19,6 +19,5 @@ package us.camin.regions;
  */
 
 public interface RegionAPI {
-    public void recalculatePlayerRegions();
     public RegionManager regionManager();
 }

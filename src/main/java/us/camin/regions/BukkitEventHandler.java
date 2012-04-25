@@ -24,30 +24,46 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.entity.Player;
 
 public class BukkitEventHandler implements Listener {
-    Plugin m_plugin;
-    public BukkitEventHandler(Plugin p) {
-        m_plugin = p;
+    RegionManager m_manager;
+    public BukkitEventHandler(RegionManager manager) {
+        m_manager = manager;
     }
     
     @EventHandler
     public void onTeleport(PlayerTeleportEvent event) {
-        m_plugin.recalculatePlayerRegions();
+        m_manager.recalculatePlayerRegions();
     }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        m_plugin.recalculatePlayerRegions();
+        m_manager.recalculatePlayerRegions();
     }
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
-        m_plugin.recalculatePlayerRegions();
+        m_manager.recalculatePlayerRegions();
     }
 
     @EventHandler
     public void onWorldChange(PlayerChangedWorldEvent event) {
-        m_plugin.recalculatePlayerRegions();
+        m_manager.recalculatePlayerRegions();
+    }
+
+    @EventHandler
+    public void onPlayerRegionChanged(PlayerRegionChangeEvent event) {
+        if (event.oldRegion != null) {
+            for (Player p : m_manager.playersInRegion(event.oldRegion)) {
+                p.sendMessage(event.player.getName()+" has left the region.");
+            }
+        }
+        for (Player p : m_manager.playersInRegion(event.newRegion)) {
+            if (p != event.player) {
+                p.sendMessage(event.player.getName()+" has entered the region.");
+            }
+        }
+        event.player.sendMessage("Now entering region: "+event.newRegion.name());
     }
 }
