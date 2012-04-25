@@ -67,7 +67,7 @@ public class Plugin extends JavaPlugin {
             DynmapCommonAPI mapAPI = (DynmapCommonAPI)mapPlugin;
             MarkerAPI markerAPI = mapAPI.getMarkerAPI();
             if (markerAPI != null) {
-                RegionEventHandler regionHandler = new RegionEventHandler(markerAPI);
+                DynmapEventRelay regionHandler = new DynmapEventRelay (markerAPI);
                 getServer().getPluginManager().registerEvents(regionHandler, this);
             } else {
                 log.info("[Regions] Dynmap marker API not found. Disabling map support.");

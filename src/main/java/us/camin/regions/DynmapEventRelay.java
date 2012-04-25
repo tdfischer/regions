@@ -26,11 +26,11 @@ import org.dynmap.markers.Marker;
 import org.bukkit.event.EventHandler;
 import org.bukkit.Location;
 
-public class RegionEventHandler implements Listener {
+public class DynmapEventRelay implements Listener {
     private MarkerSet m_set;
     private MarkerAPI m_api;
 
-    public RegionEventHandler(MarkerAPI markerAPI) {
+    public DynmapEventRelay(MarkerAPI markerAPI) {
         m_api = markerAPI;
         m_set = m_api.createMarkerSet("Regions", "Regions", null, false);
     }
