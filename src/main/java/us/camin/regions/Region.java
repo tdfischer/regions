@@ -40,4 +40,11 @@ public class Region {
     public String name() {
         return m_name;
     }
+
+    /**
+     * An alternative to Location.distance() which doesn't use floating point math.
+     */
+    public int distanceTo(Location loc) {
+        return Math.abs((m_location.getBlockX()-loc.getBlockX())+Math.abs(m_location.getBlockZ()-loc.getBlockZ()));
+    }
 }

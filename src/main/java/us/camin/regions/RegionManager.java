@@ -116,7 +116,7 @@ public class RegionManager {
         Region nearest = null;
         int minDistance = -1;
         for(Region r : regions) {
-            int check = distance(loc, r.location());
+            int check = r.distanceTo(loc);
             if (minDistance == -1 || check < minDistance) {
                 nearest = r;
                 minDistance = check;
@@ -185,12 +185,5 @@ public class RegionManager {
                 }
             }
         }
-    }
-
-    /**
-     * An alternative to Location.distance() which doesn't use floating point math.
-     */
-    private static int distance(Location l1, Location l2) {
-        return Math.abs((l1.getBlockX()-l2.getBlockX())+Math.abs(l1.getBlockZ()-l2.getBlockZ()));
     }
 }
