@@ -95,8 +95,10 @@ public class Plugin extends JavaPlugin {
     public void loadRegions() {
         reloadConfig();
         ConfigurationSection section = getConfig().getConfigurationSection("worlds");
+        m_regions.clear();
         if (section != null)
             m_regions.loadRegions(section, getServer());
+        recalculatePlayerRegions();
     }
 
     public void saveRegions() {
