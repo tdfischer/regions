@@ -58,7 +58,7 @@ public class Plugin extends JavaPlugin {
         getCommand("region").setExecutor(regionCommand);
         getCommand("cityregion").setExecutor(new CityRegionCommand(this));
         getCommand("homeregion").setExecutor(new HomeRegionCommand(this));
-        getCommand("movein").setExecutor(new MoveinRegionCommand(this));
+        getCommand("movein").setExecutor(new MoveinCommand(this));
 
         getServer().getPluginManager().registerEvents(new BukkitEventHandler(this), this);
 

@@ -24,11 +24,11 @@ import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
-public class MoveinRegionCommand implements CommandExecutor {
+public class MoveinCommand implements CommandExecutor {
 
     Plugin m_plugin;
 
-    public MoveinRegionCommand(Plugin p) {
+    public MoveinCommand(Plugin p) {
         m_plugin = p;
     }
 
