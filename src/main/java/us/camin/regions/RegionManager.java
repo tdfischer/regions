@@ -117,12 +117,9 @@ public class RegionManager {
         int minDistance = -1;
         for(Region r : regions) {
             int check = distance(loc, r.location());
-            if (minDistance == -1) {
+            if (minDistance == -1 || check < minDistance) {
                 nearest = r;
                 minDistance = check;
-            } else if (check < minDistance) {
-                nearest = r;
-                minDistance  = check;
             }
         }
         return nearest;
