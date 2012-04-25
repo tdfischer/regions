@@ -83,6 +83,12 @@ public class RegionCommand implements CommandExecutor {
                 m_plugin.regenRegionPost(r);
                 p.sendMessage("Region post regenerated.");
             }
+        } else if (subCommand.equals("save") && p.hasPermission("regions.create")) {
+            m_plugin.saveRegions();
+            p.sendMessage("Regions saved.");
+        } else if (subCommand.equals("load") && p.hasPermission("regions.create")) {
+            m_plugin.loadRegions();
+            p.sendMessage("Regions loaded.");
         } else {
             p.sendMessage("Unknown operation. Options are create, remove, city.");
         }
