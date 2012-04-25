@@ -33,7 +33,7 @@ import java.util.logging.Logger;
 
 import java.util.Random;
 
-public class Plugin extends JavaPlugin {
+public class Plugin extends JavaPlugin implements RegionAPI {
     Logger log = Logger.getLogger("Regions");
     RegionManager m_regions;
     PlayerWatcher m_playerWatcher;
