@@ -131,6 +131,9 @@ public class PlayerNotifier implements Listener {
             event.player.sendMessage("You discovered the region " + event.region.name());
             event.player.sendTitle(title);
           }
+
+          // TODO: Make this configurable and disablable
+          event.player.giveExp(10);
         }
         for(Region region : nearby) {
             nearbyText.append(" ");

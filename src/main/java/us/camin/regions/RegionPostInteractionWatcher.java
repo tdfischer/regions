@@ -103,7 +103,7 @@ public class RegionPostInteractionWatcher implements Listener {
                 player.sendMessage("You cannot use region posts at this time.");
                 return;
             }
-            if (RegionPostItemWatcher.isChargeItem(handStack) && player.hasPermission("regions.charge")) {
+            if (player.isSneaking() && RegionPostItemWatcher.isChargeItem(handStack) && player.hasPermission("regions.charge")) {
               nearest.addCharges(1);
               m_plugin.getServer().getScheduler().runTask(m_plugin, () -> {
                 RegionPostBuilder builder = new RegionPostBuilder(nearest, m_plugin);
@@ -112,7 +112,9 @@ public class RegionPostInteractionWatcher implements Listener {
               m_plugin.saveRegions();
               player.setItemInHand(handStack.subtract());
               m_plugin.getServer().getPluginManager().callEvent(new PlayerAddRegionChargeEvent(player, nearest));
-            } else if (isBannerItem(handStack) && player.hasPermission("regions.setbanner")) {
+              // TODO: Make this configurable and disablable
+              player.giveExp(1);
+            } else if (player.isSneaking() && isBannerItem(handStack) && player.hasPermission("regions.setbanner")) {
               DyeColor bannerColor = DyeColor.getByDyeData(handStack.getData().getData());
               BannerMeta bannerMeta = (BannerMeta)meta;
               log.info("Setting banner color to " + bannerColor);
@@ -127,7 +129,7 @@ public class RegionPostInteractionWatcher implements Listener {
             } else if (nearest.charges() > 0 || player.hasPermission("regions.bypass.charges")) {
               m_plugin.getServer().getPluginManager().callEvent(new PlayerPostInteractEvent(player, nearest));
             } else {
-              player.sendMessage("This region post is not charged. Right click on it while holding cobblestone.");
+              player.sendMessage("This region post is not charged. Right click on it while sneaking and holding a Region Post Charge.");
             }
         }
     }

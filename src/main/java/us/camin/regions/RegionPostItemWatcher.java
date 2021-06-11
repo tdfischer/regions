@@ -107,9 +107,9 @@ public class RegionPostItemWatcher implements Listener {
           return true;
         }
 
-        if (stack.getType() == m_theAnchor.getType()) {
+        if (stack.getType() == m_theCompass.getType()) {
           ItemMeta meta = stack.getItemMeta();
-          ItemMeta theItemMeta = m_theAnchor.getItemMeta();
+          ItemMeta theItemMeta = m_theCompass.getItemMeta();
           if (meta.getItemFlags() == theItemMeta.getItemFlags()) {
             return true;
           }
@@ -126,7 +126,7 @@ public class RegionPostItemWatcher implements Listener {
         if (stack.getType() == m_theAnchor.getType()) {
           ItemMeta meta = stack.getItemMeta();
           ItemMeta theItemMeta = m_theAnchor.getItemMeta();
-          if (meta.getLore().equals(theItemMeta.getLore())) {
+          if (meta.getLore() != null && meta.getLore().equals(theItemMeta.getLore())) {
             return true;
           }
         }
@@ -145,13 +145,12 @@ public class RegionPostItemWatcher implements Listener {
 
         if (isRegionCompass(handStack) && event.getAction() == Action.RIGHT_CLICK_AIR) {
           event.setCancelled(true);
-          ItemStack compassItem = new ItemStack(Material.COMPASS);
           Region nearest = m_manager.nearestRegion(player.getLocation());
           if (nearest == null) {
             player.sendMessage("There are no regions in this world!");
             return;
           }
-          compassItem = createCompass(nearest);
+          ItemStack compassItem = createCompass(nearest);
           player.setItemInHand(compassItem);
           player.sendMessage("Now tracking " + nearest.name());
         } else if (!event.isCancelled() && isRegionCreateItem(handStack, player) && event.getAction() == Action.RIGHT_CLICK_BLOCK && !event.getClickedBlock().getType().isInteractable() && player.hasPermission("regions.create")) {
