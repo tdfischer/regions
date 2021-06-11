@@ -45,7 +45,6 @@ public class Plugin extends JavaPlugin {
     Logger log = Logger.getLogger("Regions");
     RegionManager m_regions;
     PlayerWatcher m_playerWatcher;
-    RegionPostManager m_regionPosts;
 
     public RegionManager regionManager() {
         return m_regions;
@@ -64,14 +63,6 @@ public class Plugin extends JavaPlugin {
         getCommand("region").setExecutor(new RegionCommand(this));
         getCommand("regions").setExecutor(new RegionsCommand(this));
         getCommand("regionop").setExecutor(new RegionOpCommand(this));
-
-        boolean useHolograms = getServer().getPluginManager().isPluginEnabled("HolographicDisplays");
-        if (!useHolograms) {
-            log.info("HolographicDisplays not enabled. Region posts will not have holograms.");
-        }
-        m_regionPosts = new RegionPostManager(m_regions, this, useHolograms);
-        // TODO: Make holograms configurable. Disabled by default for now.
-        //getServer().getPluginManager().registerEvents(m_regionPosts, this);
 
         loadRegions();
         m_playerWatcher.recalculatePlayerRegions(true);
@@ -120,7 +111,6 @@ public class Plugin extends JavaPlugin {
     }
 
     public void onDisable() {
-        m_regionPosts.release();
         saveRegions();
         log.info("Plugin disabled");
     }
