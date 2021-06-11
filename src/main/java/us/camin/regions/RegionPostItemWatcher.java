@@ -46,11 +46,21 @@ public class RegionPostItemWatcher implements Listener {
       m_plugin = plugin;
     }
 
-    static public ItemStack createCompass() {
+    static public ItemStack createCompass(Region r) {
       ItemStack stack = new ItemStack(Material.COMPASS);
       ItemMeta meta = stack.getItemMeta();
       List<String> lore = new ArrayList<String>();
-      lore.add("Right click to locate the nearest Region Post");
+      if (r == null) {
+          lore.add("Right click to locate the nearest Region Post");
+      } else {
+          CompassMeta compassMeta = (CompassMeta)meta;
+          compassMeta.setDisplayName(r.name() + " Region Compass");
+          compassMeta.setLodestone(r.location());
+          compassMeta.setLodestoneTracked(false);
+          lore.add("Right click to locate the nearest Region Post");
+          lore.add("Tracking: " + r.name());
+          lore.add("Coordinates: " + r.location().getX() + ", " + r.location().getY());
+      }
       meta.setLore(lore);
       meta.addEnchant(Enchantment.SOUL_SPEED, 1, true);
       meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
@@ -83,7 +93,7 @@ public class RegionPostItemWatcher implements Listener {
       return stack;
     }
 
-    private ItemStack m_theCompass = createCompass();
+    private ItemStack m_theCompass = createCompass(null);
     private ItemStack m_theItem = createCreateItem();
     private static ItemStack m_theChargeItem = createChargeItem();
 
@@ -140,15 +150,7 @@ public class RegionPostItemWatcher implements Listener {
             player.sendMessage("There are no regions in this world!");
             return;
           }
-          CompassMeta compassMeta = (CompassMeta)compassItem.getItemMeta();
-          compassMeta.setDisplayName(nearest.name());
-          compassMeta.setLodestone(nearest.location());
-          compassMeta.setLodestoneTracked(false);
-          ArrayList<String> newLore = new ArrayList<String>();
-          newLore.add("Right click to locate the nearest Region Post");
-          newLore.add("Tracking: " + nearest.name());
-          compassMeta.setLore(newLore);
-          compassItem.setItemMeta(compassMeta);
+          compassItem = createCompass(nearest);
           player.setItemInHand(compassItem);
           player.sendMessage("Now tracking " + nearest.name());
         } else if (!event.isCancelled() && isRegionCreateItem(handStack, player) && event.getAction() == Action.RIGHT_CLICK_BLOCK && !event.getClickedBlock().getType().isInteractable()) {
@@ -162,7 +164,6 @@ public class RegionPostItemWatcher implements Listener {
               player.sendMessage("You are too close to the region post for " + nearest.name());
             } else {
               Region r = new Region(meta.getDisplayName(), event.getClickedBlock().getRelative(event.getBlockFace()).getLocation());
-              //player.teleport(r.teleportLocation());
               m_plugin.getServer().getScheduler().runTask(m_plugin, () -> {
                 RegionPostBuilder builder = new RegionPostBuilder(r, m_plugin);
                 builder.build();

@@ -62,7 +62,7 @@ public class RegionOpCommand implements CommandExecutor, TabCompleter {
             });
         } else if (subCommand.equals("compass") && sender.hasPermission("regions.give-items.compass")) {
             Player player = (Player)sender;
-            ItemStack compassItem = RegionPostItemWatcher.createCreateItem();
+            ItemStack compassItem = RegionPostItemWatcher.createCompass(m_plugin.regionManager().nearestRegion(player.getLocation()));
             if (split.length > 1) {
               compassItem.setAmount(Integer.parseInt(split[1]));
             }
