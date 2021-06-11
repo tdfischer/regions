@@ -42,15 +42,13 @@ public class Region {
     private Location m_location;
     private String m_name;
     private List<Pattern> m_bannerPatterns = new ArrayList<Pattern>();
-    private DyeColor m_color = null;
+    private DyeColor m_color = DyeColor.values()[(int)(System.currentTimeMillis() % DyeColor.values().length)];
     private List<UUID> m_seenPlayers = new ArrayList<UUID>();
     private boolean m_isHub = false;
 
     public Region(String name, Location location) {
         m_location = location.toBlockLocation();
         m_name = name;
-        // Pick a random color
-        m_color = DyeColor.values()[(int)(System.currentTimeMillis() % DyeColor.values().length)];
     }
 
     public Region(String name, Location location, int visits, int charges, DyeColor color) {
@@ -61,17 +59,46 @@ public class Region {
         m_color = color;
     }
 
+    private static DyeColor[] defaultColors = {
+      DyeColor.LIGHT_BLUE,
+      DyeColor.BLACK,
+      DyeColor.BLUE,
+      DyeColor.CYAN,
+      DyeColor.BLUE,
+      DyeColor.GRAY,
+      DyeColor.GREEN,
+      DyeColor.PURPLE,
+      DyeColor.RED,
+      DyeColor.ORANGE,
+      DyeColor.GRAY,
+      DyeColor.GREEN,
+      DyeColor.MAGENTA,
+      DyeColor.RED,
+      DyeColor.WHITE,
+      DyeColor.YELLOW,
+    };
+
+    private DyeColor defaultColorForName(String name) {
+        int colorCount = defaultColors.length;
+        int hashed = Math.abs(name.hashCode());
+        return defaultColors[hashed % (colorCount - 1)];
+    }
+
     public Region(String name, World world, RegionConfiguration conf) {
     	if (conf.y == -1) {
-            Location defaultLoc = new Location(world, conf.x, 64, conf.z);
-            conf.y = world.getHighestBlockAt(defaultLoc).getY();
-        }
+        Location defaultLoc = new Location(world, conf.x, 64, conf.z);
+        conf.y = world.getHighestBlockAt(defaultLoc).getY();
+      }
     	m_name = name;
     	m_visits = conf.visits;
       m_charges = conf.charges;
       m_location = new Location(world, conf.x, conf.y, conf.z);
       m_bannerPatterns = conf.patterns;
-      m_color = conf.color;
+      if (conf.color == null) {
+        m_color = defaultColorForName(name);
+      } else {
+        m_color = conf.color;
+      }
       m_seenPlayers = conf.seenBy;
       m_isHub = conf.isHub;
     }

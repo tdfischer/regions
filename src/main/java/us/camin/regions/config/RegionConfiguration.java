@@ -16,7 +16,7 @@ import us.camin.regions.Region;
 import java.util.UUID;
 
 public class RegionConfiguration implements ConfigurationSerializable {
-	public int x;
+    public int x;
     public int y;
     public int z;
     public int visits;
@@ -24,7 +24,7 @@ public class RegionConfiguration implements ConfigurationSerializable {
     public boolean isHub;
     public List<Pattern> patterns;
     public List<UUID> seenBy;
-    public DyeColor color = DyeColor.YELLOW;
+    public DyeColor color = null;
 
     public RegionConfiguration(Region region) {
         Location loc = region.location();
@@ -47,7 +47,10 @@ public class RegionConfiguration implements ConfigurationSerializable {
         visits = (Integer)confSection.getOrDefault("visits", 0);
         charges = (Integer)confSection.getOrDefault("charges", 0);
         patterns = (List<Pattern>)confSection.getOrDefault("banner", new ArrayList<Pattern>());
-        color = DyeColor.valueOf((String)confSection.getOrDefault("color", "YELLOW"));
+        String colorStr = (String)confSection.getOrDefault("color", null);
+        if (colorStr != null) {
+          color = DyeColor.valueOf(colorStr);
+        }
         seenBy = new ArrayList<UUID>();
         List<String> strList = (List<String>)confSection.getOrDefault("seenBy", new ArrayList<String>());
         for(String s : strList) {
