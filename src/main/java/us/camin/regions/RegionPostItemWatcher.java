@@ -81,7 +81,7 @@ public class RegionPostItemWatcher implements Listener {
       return stack;
     }
 
-    static public ItemStack createCreateItem() {
+    static public ItemStack createAnchor() {
       ItemStack stack = new ItemStack(Material.LANTERN);
       ItemMeta meta = stack.getItemMeta();
       List<String> lore = new ArrayList<String>();
@@ -89,12 +89,13 @@ public class RegionPostItemWatcher implements Listener {
       meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
       meta.addEnchant(Enchantment.SOUL_SPEED, 1, true);
       meta.setLore(lore);
+      meta.setDisplayName("Region Post Anchor");
       stack.setItemMeta(meta);
       return stack;
     }
 
     private ItemStack m_theCompass = createCompass(null);
-    private ItemStack m_theItem = createCreateItem();
+    private ItemStack m_theAnchor = createAnchor();
     private static ItemStack m_theChargeItem = createChargeItem();
 
     public static boolean isChargeItem(ItemStack stack) {
@@ -106,9 +107,9 @@ public class RegionPostItemWatcher implements Listener {
           return true;
         }
 
-        if (stack.getType() == m_theItem.getType()) {
+        if (stack.getType() == m_theAnchor.getType()) {
           ItemMeta meta = stack.getItemMeta();
-          ItemMeta theItemMeta = m_theItem.getItemMeta();
+          ItemMeta theItemMeta = m_theAnchor.getItemMeta();
           if (meta.getItemFlags() == theItemMeta.getItemFlags()) {
             return true;
           }
@@ -118,13 +119,13 @@ public class RegionPostItemWatcher implements Listener {
     }
 
     public boolean isRegionCreateItem(ItemStack stack, Player p) {
-        if (stack.isSimilar(m_theItem)) {
+        if (stack.isSimilar(m_theAnchor)) {
           return true;
         }
 
-        if (stack.getType() == m_theItem.getType()) {
+        if (stack.getType() == m_theAnchor.getType()) {
           ItemMeta meta = stack.getItemMeta();
-          ItemMeta theItemMeta = m_theItem.getItemMeta();
+          ItemMeta theItemMeta = m_theAnchor.getItemMeta();
           if (meta.getLore().equals(theItemMeta.getLore())) {
             return true;
           }
@@ -153,15 +154,16 @@ public class RegionPostItemWatcher implements Listener {
           compassItem = createCompass(nearest);
           player.setItemInHand(compassItem);
           player.sendMessage("Now tracking " + nearest.name());
-        } else if (!event.isCancelled() && isRegionCreateItem(handStack, player) && event.getAction() == Action.RIGHT_CLICK_BLOCK && !event.getClickedBlock().getType().isInteractable()) {
+        } else if (!event.isCancelled() && isRegionCreateItem(handStack, player) && event.getAction() == Action.RIGHT_CLICK_BLOCK && !event.getClickedBlock().getType().isInteractable() && player.hasPermission("regions.create")) {
           event.setUseItemInHand(Event.Result.DENY);
           event.setCancelled(true);
-          if (meta.getDisplayName().equals("")) {
+          if (meta.getDisplayName().equals("") || meta.getDisplayName().equals("Region Post Anchor")) {
             player.sendMessage("You must first give this item a name!");
           } else {
-            Region nearest = m_manager.nearestRegion(player.getLocation());
-            if (nearest != null && player.getLocation().distance(nearest.interactLocation()) <= 500) {
-              player.sendMessage("You are too close to the region post for " + nearest.name());
+            Region nearest = m_manager.nearestRegion(event.getClickedBlock().getLocation());
+            if (nearest != null && event.getClickedBlock().getLocation().distance(nearest.interactLocation()) < 500) {
+              int distance = 500 - (int)event.getClickedBlock().getLocation().distance(nearest.interactLocation());
+              player.sendMessage("You are " + distance + " blocks too close to the region post for " + nearest.name() + ".");
             } else {
               Region r = new Region(meta.getDisplayName(), event.getClickedBlock().getRelative(event.getBlockFace()).getLocation());
               m_plugin.getServer().getScheduler().runTask(m_plugin, () -> {

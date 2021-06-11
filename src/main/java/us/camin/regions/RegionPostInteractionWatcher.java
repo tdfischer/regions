@@ -103,7 +103,7 @@ public class RegionPostInteractionWatcher implements Listener {
                 player.sendMessage("You cannot use region posts at this time.");
                 return;
             }
-            if (RegionPostItemWatcher.isChargeItem(handStack)) {
+            if (RegionPostItemWatcher.isChargeItem(handStack) && player.hasPermission("regions.charge")) {
               nearest.addCharges(1);
               m_plugin.getServer().getScheduler().runTask(m_plugin, () -> {
                 RegionPostBuilder builder = new RegionPostBuilder(nearest, m_plugin);
@@ -112,7 +112,7 @@ public class RegionPostInteractionWatcher implements Listener {
               m_plugin.saveRegions();
               player.setItemInHand(handStack.subtract());
               m_plugin.getServer().getPluginManager().callEvent(new PlayerAddRegionChargeEvent(player, nearest));
-            } else if (isBannerItem(handStack)) {
+            } else if (isBannerItem(handStack) && player.hasPermission("regions.setbanner")) {
               DyeColor bannerColor = DyeColor.getByDyeData(handStack.getData().getData());
               BannerMeta bannerMeta = (BannerMeta)meta;
               log.info("Setting banner color to " + bannerColor);

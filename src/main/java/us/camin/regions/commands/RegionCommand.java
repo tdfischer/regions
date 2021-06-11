@@ -70,7 +70,7 @@ public class RegionCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         String subCommand = split[0];
-        if (subCommand.equals("create") && p.hasPermission("regions.create")) {
+        if (subCommand.equals("create") && p.hasPermission("regions.commands.create")) {
             if (split.length <= 1) {
               p.sendMessage("Must specify a region name");
               return true;
@@ -85,7 +85,7 @@ public class RegionCommand implements CommandExecutor, TabCompleter {
             p.teleport(r.teleportLocation());
             m_plugin.regionManager().addRegion(r);
             m_plugin.saveRegions();
-        } else if (subCommand.equals("remove") && p.hasPermission("regions.remove")) {
+        } else if (subCommand.equals("remove") && p.hasPermission("regions.commands.remove")) {
             Region r = m_plugin.regionManager().nearestRegion(p.getLocation());
             if (r == null) {
                 p.sendMessage("There are no regions in this world.");
@@ -94,7 +94,7 @@ public class RegionCommand implements CommandExecutor, TabCompleter {
             m_plugin.regionManager().removeRegion(r);
             p.sendMessage("Deleted region " + r.coloredName());
             m_plugin.saveRegions();
-        } else if (subCommand.equals("regen") && p.hasPermission("regions.regen")) {
+        } else if (subCommand.equals("regen") && p.hasPermission("regions.commands.regen")) {
             Region r = m_plugin.regionManager().nearestRegion(p.getLocation());
             if (r == null) {
                 p.sendMessage("There are no regions in this world.");
@@ -106,7 +106,7 @@ public class RegionCommand implements CommandExecutor, TabCompleter {
                   p.sendMessage("Region post regenerated.");
                 });
             }
-        } else if (subCommand.equals("regenall") && p.hasPermission("regions.regen.all")) {
+        } else if (subCommand.equals("regenall") && p.hasPermission("regions.commands.regen.all")) {
             for(Region r : m_plugin.regionManager().regionsForWorld(p.getLocation().getWorld())) {
                 m_plugin.getServer().getScheduler().runTask(m_plugin, () -> {
                   RegionPostBuilder builder = new RegionPostBuilder(r, m_plugin);

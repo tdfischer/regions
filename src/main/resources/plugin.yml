@@ -21,7 +21,7 @@ permissions:
         description: Allows use of all regions permissions
         children:
             regions.create: true
-            regions.remove: true
+            regions.commands.*: true
             regions.regen.*: true
             regions.bypass.*: true
             regions.give-items.*: true
@@ -35,15 +35,27 @@ permissions:
         default: true
         description: Use region posts
     regions.create:
+        default: true
+        description: Create a region with a region item
+    regions.setbanner:
+        default: true
+        description: Allows setting a region post banner
+    regions.charge:
+        default: true
+        description: Allows charging a region post with a charge item
+    regions.commands.*:
         default: op
-        description: Create a region
-    regions.remove:
+        children:
+          regions.commands.remove: true
+          regions.commands.regen: true
+          regions.commands.regen.all: true
+    regions.commands.remove:
         default: op
         description: Remove a region
-    regions.regen:
+    regions.commands.regen:
         default: op
         description: Regenerates a region post
-    regions.regen.all:
+    regions.commands.regen.all:
         default: op
         description: Regenerates all region posts, including in unloaded chunks
     regions.bypass.*:

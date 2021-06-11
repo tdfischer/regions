@@ -72,11 +72,11 @@ public class RegionOpCommand implements CommandExecutor, TabCompleter {
             }
         } else if (subCommand.equals("item") && sender.hasPermission("regions.give-items.creator")) {
             Player player = (Player)sender;
-            ItemStack createItem = RegionPostItemWatcher.createCreateItem();
+            ItemStack anchorStack = RegionPostItemWatcher.createAnchor();
             if (split.length > 1) {
-              createItem.setAmount(Integer.parseInt(split[1]));
+              anchorStack.setAmount(Integer.parseInt(split[1]));
             }
-            HashMap<Integer, ItemStack> rejected = player.getInventory().addItem(createItem);
+            HashMap<Integer, ItemStack> rejected = player.getInventory().addItem(anchorStack);
             for(ItemStack item : rejected.values()) {
               player.getLocation().getWorld().dropItem(player.getLocation(), item);
             }
