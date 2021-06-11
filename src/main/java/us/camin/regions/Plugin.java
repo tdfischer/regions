@@ -19,112 +19,109 @@ package us.camin.regions;
  */
 
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.Location;
-import org.bukkit.plugin.PluginManager;
-import org.bukkit.World;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.command.CommandExecutor;
+import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.plugin.ServicePriority;
-import org.bukkit.plugin.ServicesManager;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.dynmap.markers.MarkerAPI;
+
+import us.camin.regions.commands.RegionCommand;
+import us.camin.regions.commands.RegionOpCommand;
+import us.camin.regions.commands.RegionsCommand;
+import us.camin.regions.config.RegionConfiguration;
+import us.camin.regions.config.WorldConfiguration;
+import us.camin.regions.ui.PlayerInventoryTeleporter;
+
 import org.dynmap.DynmapCommonAPI;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import java.util.Random;
+import javax.security.auth.login.ConfigurationSpi;
 
-public class Plugin extends JavaPlugin implements RegionAPI {
+public class Plugin extends JavaPlugin {
     Logger log = Logger.getLogger("Regions");
     RegionManager m_regions;
     PlayerWatcher m_playerWatcher;
+    RegionPostManager m_regionPosts;
 
     public RegionManager regionManager() {
         return m_regions;
     }
 
+    public PlayerWatcher playerWatcher() {
+        return m_playerWatcher;
+    }
+
     public void onEnable() {
-        log.info("[Regions] Enabling Regions");
-        m_regions = new RegionManager(getServer());
-
-        m_playerWatcher = new PlayerWatcher(m_regions);
+        log.info("Enabling Regions");
+        ConfigurationSerialization.registerClass(RegionConfiguration.class);
+        m_regions = new RegionManager(this, getServer());
+        m_playerWatcher = new PlayerWatcher(this, m_regions);
         
-        getServer().getScheduler().scheduleAsyncRepeatingTask(this, m_playerWatcher, 0, 5*20);
+        getCommand("region").setExecutor(new RegionCommand(this));
+        getCommand("regions").setExecutor(new RegionsCommand(this));
+        getCommand("regionop").setExecutor(new RegionOpCommand(this));
 
-        CommandExecutor regionCommand = new RegionCommand(this);
-        getCommand("region").setExecutor(regionCommand);
-        getCommand("cityregion").setExecutor(new CityRegionCommand(this));
-        getCommand("homeregion").setExecutor(new HomeRegionCommand(this));
-        getCommand("movein").setExecutor(new MoveinCommand(this));
+        boolean useHolograms = getServer().getPluginManager().isPluginEnabled("HolographicDisplays");
+        if (!useHolograms) {
+            log.info("HolographicDisplays not enabled. Region posts will not have holograms.");
+        }
+        m_regionPosts = new RegionPostManager(m_regions, this, useHolograms);
+        // TODO: Make holograms configurable. Disabled by default for now.
+        //getServer().getPluginManager().registerEvents(m_regionPosts, this);
 
-        getServer().getPluginManager().registerEvents(new BukkitEventHandler(m_regions), this);
-
+        loadRegions();
+        m_playerWatcher.recalculatePlayerRegions(true);
         org.bukkit.plugin.Plugin mapPlugin = getServer().getPluginManager().getPlugin("dynmap");
-        if (mapPlugin instanceof DynmapCommonAPI) {
+        if (mapPlugin instanceof DynmapCommonAPI && mapPlugin != null) {
             DynmapCommonAPI mapAPI = (DynmapCommonAPI)mapPlugin;
             MarkerAPI markerAPI = mapAPI.getMarkerAPI();
             if (markerAPI != null) {
-                DynmapEventRelay regionHandler = new DynmapEventRelay (markerAPI);
+                DynmapEventRelay regionHandler = new DynmapEventRelay (this, markerAPI);
                 getServer().getPluginManager().registerEvents(regionHandler, this);
             } else {
-                log.info("[Regions] Dynmap marker API not found. Disabling map support.");
+                log.info("Dynmap marker API not found. Disabling map support.");
             }
         } else {
-            log.info("[Regions] Dynmap not found. Disabling map support.");
+            log.info("Dynmap not found. Disabling map support.");
         }
 
-        ServicesManager sm = getServer().getServicesManager();
-        sm.register(RegionAPI.class, this, this, ServicePriority.Normal);
-
-        loadRegions();
-    }
-
-    private void loadTestRegions() {
-        log.info("[Regions] Loading test regions for development");
-        String[] regionNames = {"Redstone", "Lapis", "Dwarf City"};
-        Random rand = new Random();
-        for(World w : getServer().getWorlds()) {
-            for(String name : regionNames) {
-                Location loc = new Location(w, rand.nextInt(30), 64, rand.nextInt(30));
-                Region r = new Region(name, loc);
-                m_regions.addRegion(r);
-            }
-        }
+        // Install the event handler after things are loaded so players aren't spammed with text
+        getServer().getPluginManager().registerEvents(m_playerWatcher, this);
+        getServer().getPluginManager().registerEvents(new PlayerNotifier(this, m_regions), this);
+        getServer().getPluginManager().registerEvents(new PlayerInventoryTeleporter(this, m_regions), this);
+        getServer().getPluginManager().registerEvents(new RegionPostItemWatcher(this, m_regions), this);
+        getServer().getPluginManager().registerEvents(new RegionPostInteractionWatcher(this, m_regions), this);
     }
 
     public void loadRegions() {
         reloadConfig();
-        ConfigurationSection section = getConfig().getConfigurationSection("worlds");
         m_regions.clear();
-        if (section != null)
-            m_regions.loadRegions(section, getServer());
-        m_regions.recalculatePlayerRegions();
+        this.getDataFolder().mkdir();
+        File regionConfigFile = new File(this.getDataFolder(), "regions.yml");
+        Configuration regionConf = YamlConfiguration.loadConfiguration(regionConfigFile);
+        m_regions.loadRegions(regionConf);
     }
 
     public void saveRegions() {
-        m_regions.saveRegions(getConfig().createSection("worlds"));
+    	this.getDataFolder().mkdir();
+        File regionConfigFile = new File(this.getDataFolder(), "regions.yml");
+        YamlConfiguration regionConf = YamlConfiguration.loadConfiguration(regionConfigFile);
+        m_regions.saveRegions(regionConf);
+        try {
+			regionConf.save(regionConfigFile);
+		} catch (IOException e) {
+			log.log(Level.SEVERE, "Failed to write out regions.yml!!! Your data has not been saved!", e);
+		}
         saveConfig();
     }
 
     public void onDisable() {
+        m_regionPosts.release();
         saveRegions();
-        log.info("[Regions] Plugin disabled");
-    }
-
-    public void regenRegionPost(Region r) {
-        World world = r.location().getWorld();
-        Location center = world.getHighestBlockAt(r.location()).getLocation();
-        for(int x = center.getBlockX()-1;x <= center.getBlockX()+1;x++) {
-            for(int z = center.getBlockZ()-1;z <= center.getBlockZ()+1;z++) {
-                Block b = world.getBlockAt(x, center.getBlockY()-1, z);
-                b.setType(Material.COBBLESTONE);
-            }
-        }
-
-        for(int y = center.getBlockY()-2;y < center.getBlockY()+2;y++) {
-            Block b = world.getBlockAt(center.getBlockX(), y, center.getBlockZ());
-            b.setType(Material.GLOWSTONE);
-        }
+        log.info("Plugin disabled");
     }
 }

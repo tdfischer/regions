@@ -21,96 +21,49 @@ package us.camin.regions;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.plugin.PluginManager;
-
 import java.util.logging.Logger;
 import java.util.Map;
-import java.util.List;
 import java.util.HashMap;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.ArrayList;
 import java.util.Set;
 
-public class RegionManager {
-    Logger log = Logger.getLogger("Regions.RegionManager");
-    private Map<String, Collection<Region>> m_regions;
-    private Map<String, Region> m_cityRegions;
-    private Map<String, Region> m_homeRegions;
-    private Server m_server;
-    private Map<Player, Region> m_lastKnownRegions;
-    private Map<Region, Collection<Player>> m_regionPlayerLists;
+import us.camin.regions.config.RegionConfiguration;
+import us.camin.regions.config.WorldConfiguration;
+import us.camin.regions.events.RegionCreateEvent;
+import us.camin.regions.events.RegionRemoveEvent;
+import us.camin.regions.geometry.RegionSet;
+import java.util.logging.Level;
 
-    public RegionManager(Server server) {
+public class RegionManager {
+
+    Logger log = Logger.getLogger("Regions.RegionManager");
+    private Map<String, RegionSet> m_regions;
+    private Server m_server;
+    public RegionManager(Plugin plugin, Server server) {
         m_server = server;
+        log.setLevel(Level.ALL);
         clear();
     }
 
-    public synchronized Collection<Player> playersInRegion(Region r) {
-        if (m_regionPlayerLists.get(r) == null)
-            return Collections.unmodifiableCollection(new ArrayList<Player>());
-        return Collections.unmodifiableCollection(m_regionPlayerLists.get(r));
-    }
-
-    public synchronized void recalculatePlayerRegions() {
-        ArrayList<Event> updateEvents = new ArrayList<Event>();
-        Player[] allPlayers = m_server.getOnlinePlayers();
-        for (Player p : allPlayers) {
-            Location loc = p.getLocation();
-            Region nearest = nearestRegion(loc);
-            if (nearest != null) {
-                log.finest("Current region for "+p.getName()+": "+nearest.name());
-                Region last = m_lastKnownRegions.get(p);
-                if (nearest != last) {
-                    updateEvents.add(new PlayerRegionChangeEvent(p, last, nearest));
-                    log.fine("Player "+p.getName()+" entered region "+nearest.name());
-                    m_regionPlayerLists.get(nearest).add(p);
-                    if (m_regionPlayerLists.get(last) != null)
-                        m_regionPlayerLists.get(last).remove(p);
-                    m_lastKnownRegions.put(p, nearest);
-                }
-            }
-        }
-        for (Event e : updateEvents) {
-            m_server.getPluginManager().callEvent(e);
-        }
-    }
-
     public synchronized void clear() {
-        m_regions = new HashMap<String, Collection<Region>>();
-        m_cityRegions = new HashMap<String, Region>();
-        m_homeRegions = new HashMap<String, Region>();
-        m_lastKnownRegions = new HashMap<Player, Region>();
-        m_regionPlayerLists = new HashMap<Region, Collection<Player>>();
+        m_regions = new HashMap<>();
     }
 
     public synchronized void renameWorld(String oldName, String newName) {
         log.fine("Renaming "+oldName+" to "+newName);
         m_regions.put(newName, m_regions.remove(oldName));
-        m_cityRegions.put(newName, m_cityRegions.remove(oldName));
-    }
-
-    public synchronized Region cityRegion(String worldName) {
-        return m_cityRegions.get(worldName);
-    }
-
-    public synchronized void setCityRegion(String worldName, Region region) {
-        m_cityRegions.put(worldName, region);
     }
 
     public synchronized boolean addRegion(Region r) {
         String worldName = r.location().getWorld().getName();
         log.fine("Adding new region "+r.name()+" at "+r.location());
         if (!m_regions.containsKey(worldName))
-            m_regions.put(worldName, new ArrayList<Region>());
+            m_regions.put(worldName, new RegionSet());
         if (m_regions.get(worldName).add(r)) {
-            m_regionPlayerLists.put(r, new ArrayList<Player>());
             m_server.getPluginManager().callEvent(new RegionCreateEvent(r));
-            recalculatePlayerRegions();
         }
         return false;
     }
@@ -120,99 +73,79 @@ public class RegionManager {
         log.fine("Removing region "+r.name()+" from "+r.location());
         if (m_regions.containsKey(worldName)) {
             if (m_regions.get(worldName).remove(r)) {
-                m_regionPlayerLists.remove(r);
                 m_server.getPluginManager().callEvent(new RegionRemoveEvent(r));
-                recalculatePlayerRegions();
             }
             return true;
         }
         return false;
     }
 
-    public Collection<Region> regionsForWorld(World world) {
+    public RegionSet regionsForWorld(World world) {
         return regionsForWorld(world.getName());
     }
 
-    public synchronized Collection<Region> regionsForWorld(String worldName) {
-        if (m_regions.containsKey(worldName))
-            return Collections.unmodifiableCollection(m_regions.get(worldName));
-        else
-            return Collections.unmodifiableCollection(new ArrayList<Region>());
+    public Collection<Region> neighborsForRegion(Region region) {
+        return regionsForWorld(region.location().getWorld()).borders().neighbors(region);
+    }
+
+    public Collection<Region> worldHubs(World world) {
+        ArrayList<Region> regions = new ArrayList<Region>();
+        for(Region r : regionsForWorld(world.getName())) {
+          if (r.isHub()) {
+            regions.add(r);
+          }
+        }
+        return regions;
+    }
+
+    public synchronized RegionSet regionsForWorld(String worldName) {
+        if (m_regions.containsKey(worldName)) {
+            return m_regions.get(worldName);
+        } else {
+            return new RegionSet();
+        }
     }
 
     public Region nearestRegion(Location loc) {
-        Collection<Region> regions = regionsForWorld(loc.getWorld());
-        Region nearest = null;
-        int minDistance = -1;
-        for(Region r : regions) {
-            int check = r.distanceTo(loc);
-            if (minDistance == -1 || check < minDistance) {
-                nearest = r;
-                minDistance = check;
-            }
-        }
-        return nearest;
+        return regionsForWorld(loc.getWorld()).nearestRegion(loc);
     }
 
     public synchronized void saveRegions(ConfigurationSection section) {
         for(String worldName : m_regions.keySet()) {
-            ConfigurationSection worldSection = section.createSection(worldName);
-            Region cityRegion = cityRegion(worldName);
-            if (cityRegion != null)
-                worldSection.set("city", cityRegion.name());
-            ConfigurationSection worldRegionSection = worldSection.createSection("regions");
+            ConfigurationSection worldRegionSection = section.createSection(worldName);
             for(Region r : regionsForWorld(worldName)) {
-                ConfigurationSection regionSection = worldRegionSection.createSection(r.name());
-                regionSection.set("x", r.location().getBlockX());
-                regionSection.set("z", r.location().getBlockZ());
-                ArrayList<String> homePlayers = new ArrayList<String>();
-                for(String player : m_homeRegions.keySet()) {
-                    if (m_homeRegions.get(player) == r) {
-                        homePlayers.add(player);
-                    }
-                }
-                regionSection.set("players", homePlayers);
+                RegionConfiguration conf = new RegionConfiguration(r);
+                worldRegionSection.createSection(r.name(), conf.serialize());
             }
         }
     }
 
     public synchronized Region homeRegion(String playerName) {
-        return m_homeRegions.get(playerName);
+        return null;
+        //return m_homeRegions.get(playerName);
     }
 
-    public synchronized void setHomeRegion(String player, Region r) {
-        m_homeRegions.put(player, r);
+    public synchronized void setHomeRegion(Player player, Region r) {
+        /*Region old = m_homeRegions.get(player.getName());
+        m_homeRegions.put(player.getName(), r);
+  	    log.info("Player "+player.getName()+" moved in to "+r.name());
+  	    PlayerMoveInEvent evt = new PlayerMoveInEvent(player, r, old);
+  	    m_plugin.getServer().getPluginManager().callEvent(evt);*/
     }
 
-    public synchronized void loadRegions(ConfigurationSection section, Server server) {
-        Set<String> worldNames = section.getKeys(false);
-        for(String worldName : worldNames) {
-            ConfigurationSection worldSection = section.getConfigurationSection(worldName);
-            String cityName = worldSection.getString("city");
-            ConfigurationSection worldRegionSection = worldSection.getConfigurationSection("regions");
-            Set<String> regionNames = worldRegionSection.getKeys(false);
-            World world = server.getWorld(worldName);
-            if (world == null) {
-                log.warning("Could not find world: "+worldName);
-                continue;
-            }
-            for(String regionName : regionNames) {
-                ConfigurationSection regionSection = worldRegionSection.getConfigurationSection(regionName);
-                int x = regionSection.getInt("x");
-                int z = regionSection.getInt("z");
-                Location loc = new Location(world, x, 64, z);
-                Region r = new Region(regionName, loc);
-                addRegion(r);
+    public synchronized void loadRegions(ConfigurationSection section) {
+    	for(World world : m_server.getWorlds()) {
+    		ConfigurationSection worldConfig = section.getConfigurationSection(world.getName());
 
-                if (regionName.equals(cityName)) {
-                    m_cityRegions.put(worldName, r);
-                }
+    		if (worldConfig == null) {
+    			log.info("No regions configured for world " + world.getName());
+    			continue;
+    		}
 
-                List<String> regionPlayers = regionSection.getStringList("players");
-                for(String player : regionPlayers) {
-                    m_homeRegions.put(player, r);
-                }
+            for(String regionName : worldConfig.getKeys(false)) {
+                RegionConfiguration conf = new RegionConfiguration(worldConfig.getConfigurationSection(regionName).getValues(false));
+                addRegion(new Region(regionName, world, conf));
             }
-        }
+    	}
     }
 }

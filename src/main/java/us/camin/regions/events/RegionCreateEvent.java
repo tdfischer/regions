@@ -1,4 +1,4 @@
-package us.camin.regions;
+package us.camin.regions.events;
 
 /**
  * This file is part of Regions
@@ -18,8 +18,9 @@ package us.camin.regions;
  *
  */
 
-import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+
+import us.camin.regions.Region;
 
 public class RegionCreateEvent extends RegionEvent {
     public static final HandlerList s_handlers = new HandlerList();

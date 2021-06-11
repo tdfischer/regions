@@ -1,4 +1,4 @@
-package us.camin.regions;
+package us.camin.regions.events;
 
 /**
  * This file is part of Regions
@@ -20,19 +20,21 @@ package us.camin.regions;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+
+import us.camin.regions.Region;
+
 import org.bukkit.entity.Player;
 
-public class PlayerRegionChangeEvent extends Event {
-    private static final HandlerList s_handlers = new HandlerList();
-    public final Region oldRegion;
-    public final Region newRegion;
-    public final Player player;
+public class PlayerPostInteractEvent extends Event {
 
-    public PlayerRegionChangeEvent(Player p, Region oldRegion, Region newRegion) {
-        this.oldRegion = oldRegion;
-        this.newRegion = newRegion;
-        this.player = p;
-    }
+	private static final HandlerList s_handlers = new HandlerList();
+	public final Region region;
+	public final Player player;
+
+	public PlayerPostInteractEvent(Player p, Region region) {
+		this.region = region;
+		this.player = p;
+	}
 
     @Override
     public HandlerList getHandlers() {
@@ -43,3 +45,4 @@ public class PlayerRegionChangeEvent extends Event {
         return s_handlers;
     }
 }
+

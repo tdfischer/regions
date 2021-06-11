@@ -1,4 +1,4 @@
-package us.camin.regions;
+package us.camin.regions.commands;
 
 /**
  * This file is part of Regions
@@ -21,14 +21,33 @@ package us.camin.regions;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.Command;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-public class RegionCommand implements CommandExecutor {
+import java.util.List;
+import java.util.ArrayList;
+
+import us.camin.regions.Plugin;
+import us.camin.regions.Region;
+import us.camin.regions.ui.RegionPostBuilder;
+
+public class RegionCommand implements CommandExecutor, TabCompleter {
 
     Plugin m_plugin;
 
     public RegionCommand(Plugin p) {
         m_plugin = p;
+    }
+
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        List<String> ret = new ArrayList<String>();
+        if (args.length <= 1) {
+            ret.add("create");
+            ret.add("remove");
+            ret.add("regen");
+            ret.add("regenall");
+        }
+        return ret;
     }
 
     public boolean onCommand(CommandSender sender, Command command, String label, String[] split) {
@@ -43,11 +62,19 @@ public class RegionCommand implements CommandExecutor {
                 p.sendMessage("There are no regions in this world.");
                 return true;
             }
-            p.sendMessage("Current region: "+r.name());
+            p.sendMessage("Current region: "+r.coloredName());
+            p.sendMessage("Players in region:");
+            for(Player neighbor : m_plugin.playerWatcher().playersInRegion(r)) {
+              p.sendMessage(neighbor.getName());
+            }
             return true;
         }
         String subCommand = split[0];
         if (subCommand.equals("create") && p.hasPermission("regions.create")) {
+            if (split.length <= 1) {
+              p.sendMessage("Must specify a region name");
+              return true;
+            }
             StringBuilder regionName = new StringBuilder();
             for(int i = 1;i<split.length-1;i++) {
                 regionName.append(split[i]);
@@ -55,9 +82,9 @@ public class RegionCommand implements CommandExecutor {
             }
             regionName.append(split[split.length-1]);
             Region r = new Region(regionName.toString(), p.getLocation());
-            m_plugin.regionManager().addRegion(r);
-            m_plugin.regenRegionPost(r);
             p.teleport(r.teleportLocation());
+            m_plugin.regionManager().addRegion(r);
+            m_plugin.saveRegions();
         } else if (subCommand.equals("remove") && p.hasPermission("regions.remove")) {
             Region r = m_plugin.regionManager().nearestRegion(p.getLocation());
             if (r == null) {
@@ -65,30 +92,30 @@ public class RegionCommand implements CommandExecutor {
                 return true;
             }
             m_plugin.regionManager().removeRegion(r);
-        } else if (subCommand.equals("city") && p.hasPermission("regions.setCity")) {
-            Region r = m_plugin.regionManager().nearestRegion(p.getLocation());
-            if (r == null) {
-                p.sendMessage("There are no regions in this world.");
-                return true;
-            }
-            m_plugin.regionManager().setCityRegion(p.getLocation().getWorld().getName(), r);
-            p.sendMessage("City region set to "+r.name());
-        } else if (subCommand.equals("regen") && p.hasPermission("regions.create")) {
+            p.sendMessage("Deleted region " + r.coloredName());
+            m_plugin.saveRegions();
+        } else if (subCommand.equals("regen") && p.hasPermission("regions.regen")) {
             Region r = m_plugin.regionManager().nearestRegion(p.getLocation());
             if (r == null) {
                 p.sendMessage("There are no regions in this world.");
             } else {
-                m_plugin.regenRegionPost(r);
-                p.sendMessage("Region post regenerated.");
+                p.sendMessage("Regenerating region post...");
+                m_plugin.getServer().getScheduler().runTask(m_plugin, () -> {
+                  RegionPostBuilder builder = new RegionPostBuilder(r, m_plugin);
+                  builder.build();
+                  p.sendMessage("Region post regenerated.");
+                });
             }
-        } else if (subCommand.equals("save") && p.hasPermission("regions.create")) {
-            m_plugin.saveRegions();
-            p.sendMessage("Regions saved.");
-        } else if (subCommand.equals("load") && p.hasPermission("regions.create")) {
-            m_plugin.loadRegions();
-            p.sendMessage("Regions loaded.");
+        } else if (subCommand.equals("regenall") && p.hasPermission("regions.regen.all")) {
+            for(Region r : m_plugin.regionManager().regionsForWorld(p.getLocation().getWorld())) {
+                m_plugin.getServer().getScheduler().runTask(m_plugin, () -> {
+                  RegionPostBuilder builder = new RegionPostBuilder(r, m_plugin);
+                  builder.build();
+                });
+            }
+            p.sendMessage("Region posts will be regenerated");
         } else {
-            p.sendMessage("Unknown operation. Options are create, remove, city.");
+            p.sendMessage("Unknown operation. Options are: create, remove, regen.");
         }
         return true;
     }

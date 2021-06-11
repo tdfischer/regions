@@ -1,22 +1,20 @@
 name: Regions
 main: us.camin.regions.Plugin
-author: Trever Fischer <wm161@wm161.net>
-website: http://camin.us/
+author: Torrie Fischer <tdfischer@hackerbots.net>
+website: http://hackerbots.net/
 version: ${version}
-softdepend: [dynmap]
+api-version: 1.16
+softdepend: [dynmap, HolographicDisplays, ProtocolLib]
 commands:
+    regions:
+        description: "List available regions."
+        usage: /<command>
+    regionop:
+        description: "Region admin tools"
+        usage: /<command> [args...]
     region:
         description: Interface to the region system
         usage: /<command> [args...]
-    movein:
-        description: "Sets your home region."
-        usage: /<command>
-    cityregion:
-        description: "Teleports you to the world's city region."
-        usage: /<command>
-    homeregion:
-        description: "Teleports you to your home region."
-        usage: /<command>
 permissions:
     regions.*:
         default: op
@@ -24,13 +22,51 @@ permissions:
         children:
             regions.create: true
             regions.remove: true
-            regions.city: true
+            regions.regen.*: true
+            regions.bypass.*: true
+            regions.give-items.*: true
+    regions.regen.*:
+        default: op
+        description: Allows regeneration of all regions
+        children:
+            regions.regen: true
+            regions.regen.all: true
+    regions.use:
+        default: true
+        description: Use region posts
     regions.create:
         default: op
         description: Create a region
     regions.remove:
         default: op
         description: Remove a region
-    regions.city:
+    regions.regen:
         default: op
-        description: Defines the city region
+        description: Regenerates a region post
+    regions.regen.all:
+        default: op
+        description: Regenerates all region posts, including in unloaded chunks
+    regions.bypass.*:
+        default: op
+        description: Bypasses all region post travel requirements
+        children:
+          regions.bypass.charges: true
+          regions.bypass.discovery: true
+    regions.bypass.charges:
+        default: op
+        description: Allows you to bypass post charge requirements
+    regions.bypass.discovery:
+        default: op
+        description: Allows you to bypass discovery requirements
+    regions.give-items.*:
+        default: op
+        children:
+          regions.give-items.compass: true
+          regions.give-items.charge: true
+          regions.give-items.creator: true
+    regions.give-items.compass:
+        default: op
+    regions.give-items.charge:
+        default: op
+    regions.give-items.creator:
+        default: op

@@ -1,4 +1,4 @@
-package us.camin.regions;
+package us.camin.regions.commands;
 
 /**
  * This file is part of Regions
@@ -22,7 +22,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
+import us.camin.regions.Plugin;
+import us.camin.regions.Region;
 
 public class MoveinCommand implements CommandExecutor {
 
@@ -40,7 +41,7 @@ public class MoveinCommand implements CommandExecutor {
         Player p = (Player)sender;
         Region nearest = m_plugin.regionManager().nearestRegion(p.getLocation());
         if (nearest != null) {
-            m_plugin.regionManager().setHomeRegion(p.getName(), nearest);
+            m_plugin.regionManager().setHomeRegion(p, nearest);
             sender.sendMessage("Your home region has been set to "+nearest.name());
         } else {
             sender.sendMessage("There are no regions in this world.");

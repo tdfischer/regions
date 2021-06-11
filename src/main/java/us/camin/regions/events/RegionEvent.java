@@ -1,4 +1,4 @@
-package us.camin.regions;
+package us.camin.regions.events;
 
 /**
  * This file is part of Regions
@@ -18,6 +18,25 @@ package us.camin.regions;
  *
  */
 
-public interface RegionAPI {
-    public RegionManager regionManager();
+import org.bukkit.event.Event;
+import org.bukkit.event.HandlerList;
+
+import us.camin.regions.Region;
+
+public abstract class RegionEvent extends Event {
+    private static final HandlerList s_handlers = new HandlerList();
+    public final Region region;
+
+    public RegionEvent(Region region) {
+        this.region = region;
+    }
+
+    @Override
+    public HandlerList getHandlers() {
+        return s_handlers;
+    }
+
+    public static HandlerList getHandlerList() {
+        return s_handlers;
+    }
 }
