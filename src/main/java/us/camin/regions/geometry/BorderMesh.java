@@ -113,7 +113,16 @@ public class BorderMesh {
           log.warning("Got a null pointer when triangulating, skipping world.");
           return false;
         } catch (NotEnoughPointsException e) {
-          log.info("Not enough points to triangulate mesh. Add more regions!");
+          log.info("Not enough points to triangulate mesh, all regions will be connected to each other. Add more regions!");
+          for(Region region : m_regions) {
+            HashSet<Region> neighbors = new HashSet<Region>();
+            for(Region neighbor : m_regions) {
+              if (neighbor != region) {
+                neighbors.add(neighbor);
+              }
+            }
+            m_neighbors.put(region, neighbors);
+          }
           return false;
         }
 
