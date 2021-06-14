@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.Random;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.ChatColor;
@@ -29,7 +30,10 @@ import org.bukkit.event.Event.Result;
 import org.bukkit.DyeColor;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.Sound;
+import org.bukkit.Particle;
 import org.bukkit.entity.Player;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.Block;
 import org.bukkit.Location;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -40,6 +44,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.Material;
 import org.bukkit.material.MaterialData;
+import org.bukkit.util.Vector;
 
 import us.camin.regions.Plugin;
 import us.camin.regions.Region;
@@ -99,22 +104,25 @@ public class PlayerInventoryTeleporter implements Listener {
                   .filter((r) -> r.name().equals(selectedName))
                   .findFirst();
                 if (destination.isPresent()) {
-                    player.sendMessage("Teleporting you there now...");
-                    nearest.addCharges(-1);
-                    destination.get().addCharges(1);
+                    Location targetLocation = destination.get().teleportLocation();
+                    int cost = nearest.getTravelCost(destination.get());
+                    int chargesConsumed = Math.min(nearest.charges(), (int)cost - player.getLevel());
+                    double payment = player.getLevel() + chargesConsumed;
+                    double accuracy = 0.8 + (payment / cost) * 0.2;
+                    if (chargesConsumed > 0) {
+                      nearest.addCharges(-chargesConsumed);
+                      player.sendMessage("You don't have enough XP. "+ chargesConsumed + " charges were consumed.");
+                    }
+                    player.giveExpLevels(-(int)cost);
                     m_plugin.getServer().getScheduler().runTask(m_plugin, () -> {
                       RegionPostBuilder builder = new RegionPostBuilder(nearest, m_plugin);
                       builder.updateLantern();
                     });
                     m_plugin.saveRegions();
-                    new PlayerTeleporter(player, nearest.teleportLocation(), destination.get().teleportLocation(), m_plugin).teleport().thenRun(() -> {
+                    new PlayerTeleporter(player, nearest.teleportLocation(), targetLocation, m_plugin, accuracy).teleport().thenRun(() -> {
                         RegionPostBuilder builder = new RegionPostBuilder(destination.get(), m_plugin);
                         builder.updateLantern();
                     });
-                    if (nearest.charges() == 0) {
-                        nearest.location().getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, (float)1.0, (float)1.0);
-                        //player.sendMessage("You've consumed this region post's last charge! You won't be able to return without recharging it.");
-                    }
                 } else {
                     player.sendMessage("There is no region with that name. This is a bug.");
                 }
@@ -169,6 +177,15 @@ public class PlayerInventoryTeleporter implements Listener {
                 meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
                 meta.addEnchant(Enchantment.SOUL_SPEED, 1, true);
               }
+              int cost = event.region.getTravelCost(region);
+              int baseCost = event.region.getBaseTravelCost(region);
+              if (cost != baseCost) {
+                lore.add(ChatColor.WHITE + "Travel cost: " + ChatColor.YELLOW + ChatColor.STRIKETHROUGH + Math.round(baseCost) + ChatColor.RESET + ChatColor.YELLOW + ChatColor.BOLD + " " + Math.round(cost) + " levels");
+              } else if (cost > 0) {
+                lore.add(ChatColor.WHITE + "Travel cost: " + ChatColor.YELLOW + Math.round(cost) + " levels");
+              } else {
+                lore.add(ChatColor.WHITE + "Travel cost: " + ChatColor.GREEN + "Free!");
+              }
               lore.add(ChatColor.WHITE + "Distance: " + ChatColor.YELLOW + Math.round(region.location().distance(event.region.location())));
               lore.add(ChatColor.WHITE + "Population: " + ChatColor.YELLOW + m_plugin.playerWatcher().playersInRegion(region).size());
               lore.add(ChatColor.WHITE + "Altitude: " + ChatColor.YELLOW + altitude);
@@ -180,6 +197,9 @@ public class PlayerInventoryTeleporter implements Listener {
                 }
               }
               lore.add("Nearby connections: " + String.join(", ", neighborNames));
+              if (event.player.getLevel() < cost) {
+                lore.add("" + ChatColor.RED + ChatColor.BOLD + "You don't have enough XP! Travel may be dangerous...");
+              }
             } else {
               lore.add("" + ChatColor.BOLD + ChatColor.GOLD + "You haven't discovered this location yet!");
               lore.add(ChatColor.WHITE + "Distance: " + ChatColor.YELLOW + ChatColor.MAGIC + Math.round(region.location().distance(event.region.location())));

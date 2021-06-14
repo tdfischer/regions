@@ -148,6 +148,28 @@ public class Region {
       m_charges += charges;
     }
 
+    public int getTravelCost(Region destination) {
+      int baseCost = getBaseTravelCost(destination);
+      if (destination.isHub()) {
+          // Travel *to* a hub is 50% cheaper, before charges applied
+          baseCost /= 2;
+      }
+      return Math.max(1, (int)(baseCost / (Math.min(4, m_charges + 1))));
+    }
+
+    public int getBaseTravelCost(Region destination) {
+      if (m_isHub && destination.isHub()) {
+        // Free travel between hubs
+        return 0;
+      } else if (m_isHub) {
+        // Max cost 1 level for travel *from* a hub
+        return 1;
+      }
+      double distance = teleportLocation().distance(destination.teleportLocation());
+      double blocksPerXP = 500;
+      return Math.max(1, (int)(distance / blocksPerXP));
+    }
+
     int m_visits = 0;
     int m_charges = 0;
 

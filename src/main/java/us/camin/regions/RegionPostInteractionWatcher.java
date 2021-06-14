@@ -128,10 +128,8 @@ public class RegionPostInteractionWatcher implements Listener {
                 RegionPostBuilder builder = new RegionPostBuilder(nearest, m_plugin);
                 builder.build();
               });
-            } else if (nearest.charges() > 0 || player.hasPermission("regions.bypass.charges")) {
-              m_plugin.getServer().getPluginManager().callEvent(new PlayerPostInteractEvent(player, nearest));
             } else {
-              player.sendMessage("This region post is not charged. Right click on it while sneaking and holding a Region Post Charge.");
+              m_plugin.getServer().getPluginManager().callEvent(new PlayerPostInteractEvent(player, nearest));
             }
         }
     }
