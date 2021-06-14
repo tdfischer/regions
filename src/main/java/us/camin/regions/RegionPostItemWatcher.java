@@ -22,6 +22,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.Event;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
@@ -50,15 +51,14 @@ public class RegionPostItemWatcher implements Listener {
       ItemStack stack = new ItemStack(Material.COMPASS);
       ItemMeta meta = stack.getItemMeta();
       List<String> lore = new ArrayList<String>();
+      lore.add("Right click to locate the nearest Region Post");
       if (r == null) {
-          lore.add("Right click to locate the nearest Region Post");
       } else {
           CompassMeta compassMeta = (CompassMeta)meta;
-          compassMeta.setDisplayName(r.name() + " Region Compass");
+          compassMeta.setDisplayName(ChatColor.DARK_PURPLE + "Region Compass (" + r.coloredName() + ChatColor.RESET + ChatColor.DARK_PURPLE + ")");
           compassMeta.setLodestone(r.location());
           compassMeta.setLodestoneTracked(false);
-          lore.add("Right click to locate the nearest Region Post");
-          lore.add("Tracking: " + r.name());
+          lore.add("Tracking: " + r.coloredName());
           lore.add("Coordinates: " + r.location().getX() + ", " + r.location().getY());
       }
       meta.setLore(lore);
@@ -110,7 +110,7 @@ public class RegionPostItemWatcher implements Listener {
         if (stack.getType() == m_theCompass.getType()) {
           ItemMeta meta = stack.getItemMeta();
           ItemMeta theItemMeta = m_theCompass.getItemMeta();
-          if (meta.getItemFlags() == theItemMeta.getItemFlags()) {
+          if (meta.getLore() != null && meta.getLore().get(0).equals(theItemMeta.getLore().get(0))) {
             return true;
           }
         }
