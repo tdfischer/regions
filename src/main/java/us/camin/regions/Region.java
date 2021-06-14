@@ -47,12 +47,12 @@ public class Region {
     private boolean m_isHub = false;
 
     public Region(String name, Location location) {
-        m_location = location.toBlockLocation();
+        m_location = location.getBlock().getLocation();
         m_name = name;
     }
 
     public Region(String name, Location location, int visits, int charges, DyeColor color) {
-        m_location = location.toBlockLocation();
+        m_location = location.getBlock().getLocation();
         m_name = name;
         m_visits = visits;
         m_charges = charges;

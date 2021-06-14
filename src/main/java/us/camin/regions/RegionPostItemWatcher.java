@@ -169,7 +169,8 @@ public class RegionPostItemWatcher implements Listener {
                 RegionPostBuilder builder = new RegionPostBuilder(r, m_plugin);
                 builder.build();
               });
-              player.setItemInHand(handStack.subtract());
+              handStack.setAmount(handStack.getAmount()-1);
+              player.setItemInHand(handStack);
               m_plugin.regionManager().addRegion(r);
               m_plugin.saveRegions();
               player.sendMessage("You established the region "+r.coloredName());

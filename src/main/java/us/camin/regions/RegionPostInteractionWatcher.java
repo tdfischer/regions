@@ -89,12 +89,13 @@ public class RegionPostInteractionWatcher implements Listener {
         Location lanternRegion = nearest.interactLocation().add(0, 1, 0);
         boolean isInteracted = false;
         if (clickedBlock != null) {
-            isInteracted |= clickedBlock.getBlockKey() == interactRegion.toBlockKey();
-            isInteracted |= clickedBlock.getBlockKey() == lanternRegion.toBlockKey();
-            isInteracted |= nearest.interactLocation().add(1, 0, 0).toBlockKey() == clickedBlock.getBlockKey();
-            isInteracted |= nearest.interactLocation().add(-1, 0, 0).toBlockKey() == clickedBlock.getBlockKey();
-            isInteracted |= nearest.interactLocation().add(0, 0, 1).toBlockKey() == clickedBlock.getBlockKey();
-            isInteracted |= nearest.interactLocation().add(0, 0, -1).toBlockKey() == clickedBlock.getBlockKey();
+            
+            isInteracted |= clickedBlock.getLocation().equals(interactRegion.getBlock().getLocation());
+            isInteracted |= clickedBlock.getLocation().equals(lanternRegion.getBlock().getLocation());
+            isInteracted |= nearest.interactLocation().add(1, 0, 0).getBlock().getLocation().equals(clickedBlock.getLocation());
+            isInteracted |= nearest.interactLocation().add(-1, 0, 0).getBlock().getLocation().equals(clickedBlock.getLocation());
+            isInteracted |= nearest.interactLocation().add(0, 0, 1).getBlock().getLocation().equals(clickedBlock.getLocation());
+            isInteracted |= nearest.interactLocation().add(0, 0, -1).getBlock().getLocation().equals(clickedBlock.getLocation());
         }
         if (isInteracted) {
             event.setCancelled(true);
@@ -110,7 +111,8 @@ public class RegionPostInteractionWatcher implements Listener {
                 builder.updateLantern();
               });
               m_plugin.saveRegions();
-              player.setItemInHand(handStack.subtract());
+              handStack.setAmount(handStack.getAmount()-1);
+              player.setItemInHand(handStack);
               m_plugin.getServer().getPluginManager().callEvent(new PlayerAddRegionChargeEvent(player, nearest));
               // TODO: Make this configurable and disablable
               player.giveExp(1);
