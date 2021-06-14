@@ -4,7 +4,7 @@ author: Torrie Fischer <tdfischer@hackerbots.net>
 website: http://hackerbots.net/
 version: ${version}
 api-version: 1.16
-softdepend: [dynmap, HolographicDisplays, ProtocolLib]
+softdepend: [dynmap, ProtocolLib]
 commands:
     regions:
         description: "List available regions."
