@@ -28,6 +28,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.Material;
 import org.bukkit.inventory.meta.BannerMeta;
 import org.bukkit.material.MaterialData;
+import org.bukkit.inventory.ItemFlag;
 
 import us.camin.regions.config.RegionConfiguration;
 import us.camin.regions.ui.Colors;
@@ -317,6 +318,8 @@ public class Region {
       ItemStack item = new ItemStack(bannerIconMaterial());
       BannerMeta bannerMeta = (BannerMeta)item.getItemMeta();
       bannerMeta.setPatterns(bannerPatterns());
+      bannerMeta.addItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
+      bannerMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
       item.setItemMeta(bannerMeta);
       return item;
     }
