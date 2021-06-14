@@ -96,8 +96,7 @@ public class PlayerNotifier implements Listener {
           } catch (Exception e) {
           }
         } else {
-          Title title = new Title.Builder().title(event.newRegion.name()).subtitle("Population: "+pop+" Altitude: " + altitude).build();
-          event.player.sendTitle(title);
+          event.player.sendTitle(event.newRegion.coloredName(), "Population: " + pop + " Altitude: " + altitude);
         }
     }
 
