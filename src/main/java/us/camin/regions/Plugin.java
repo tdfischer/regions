@@ -23,7 +23,12 @@ import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.World;
+
 import org.dynmap.markers.MarkerAPI;
+
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SingleLineChart;
 
 import us.camin.regions.commands.RegionCommand;
 import us.camin.regions.commands.RegionOpCommand;
@@ -86,6 +91,17 @@ public class Plugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerInventoryTeleporter(this, m_regions), this);
         getServer().getPluginManager().registerEvents(new RegionPostItemWatcher(this, m_regions), this);
         getServer().getPluginManager().registerEvents(new RegionPostInteractionWatcher(this, m_regions), this);
+
+        // PluginID is from bstats.org for CaminusRegions
+        Metrics metrics = new Metrics(this, 11705);
+        metrics.addCustomChart(new SingleLineChart("regions", () -> {
+            int allRegions = 0;
+            for(World w : getServer().getWorlds()) {
+              allRegions += m_regions.regionsForWorld(w).size();
+            }
+            return allRegions;
+          }
+        ));
     }
 
     public void loadRegions() {

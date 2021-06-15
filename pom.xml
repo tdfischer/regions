@@ -4,13 +4,19 @@
 	<groupId>us.camin.regions</groupId>
 	<artifactId>Regions</artifactId>
 	<packaging>jar</packaging>
-	<version>0.2.99-rc4</version>
+	<version>0.2.99-rc5</version>
 	<name>regions</name>
 	<url>http://maven.apache.org</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<dependencies>
+    <dependency>
+      <groupId>org.bstats</groupId>
+      <artifactId>bstats-bukkit</artifactId>
+      <version>2.2.1</version>
+      <scope>compile</scope>
+    </dependency>
     <dependency>
       <groupId>com.comphenix.protocol</groupId>
       <artifactId>ProtocolLib</artifactId>
@@ -86,6 +92,10 @@
                     <relocation>
                         <pattern>io.papermc.lib</pattern>
                         <shadedPattern>us.camin.regions.paperlib</shadedPattern> <!-- Replace this -->
+                    </relocation>
+                    <relocation>
+                      <pattern>org.bstats</pattern>
+                      <shadedPattern>us.camin.regions.bstats</shadedPattern>
                     </relocation>
                 </relocations>
             </configuration>
