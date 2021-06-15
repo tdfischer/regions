@@ -31,6 +31,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.CompassMeta;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.RecipeChoice;
+import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.NamespacedKey;
 import org.bukkit.event.block.Action;
 
 import us.camin.regions.ui.RegionPostBuilder;
@@ -45,6 +48,32 @@ public class RegionPostItemWatcher implements Listener {
     public RegionPostItemWatcher(Plugin plugin, RegionManager manager) {
       m_manager = manager;
       m_plugin = plugin;
+
+      // TODO: Make recipe-based creation of items configurable/disablable
+      NamespacedKey chargeKey = new NamespacedKey(m_plugin, "region_post_charge");
+      ShapedRecipe chargeRecipe = new ShapedRecipe(chargeKey, m_theChargeItem);
+      chargeRecipe.shape("DDD", "DGD", "DDD");
+      chargeRecipe.setIngredient('D', Material.GLOWSTONE_DUST);
+      chargeRecipe.setIngredient('G', Material.GHAST_TEAR);
+
+      NamespacedKey anchorKey = new NamespacedKey(m_plugin, "region_post_anchor");
+      ShapedRecipe anchorRecipe = new ShapedRecipe(anchorKey, m_theAnchor);
+      anchorRecipe.shape("DDD", "DGD", "DDD");
+      anchorRecipe.setIngredient('D', new RecipeChoice.ExactChoice(m_theChargeItem));
+      anchorRecipe.setIngredient('G', Material.LANTERN);
+
+      NamespacedKey compassKey = new NamespacedKey(m_plugin, "region_post_compass");
+      ShapedRecipe compassRecipe = new ShapedRecipe(compassKey, m_theCompass);
+      // Uses four fewer charges, slightly cheaper.
+      // TODO: Maybe we just want this to be glowstone instead of effectively 4
+      // ghast tears?
+      compassRecipe.shape(" D ", "DGD", " D ");
+      compassRecipe.setIngredient('D', new RecipeChoice.ExactChoice(m_theChargeItem));
+      compassRecipe.setIngredient('G', Material.COMPASS);
+
+      m_plugin.getServer().addRecipe(chargeRecipe);
+      m_plugin.getServer().addRecipe(anchorRecipe);
+      m_plugin.getServer().addRecipe(compassRecipe);
     }
 
     static public ItemStack createCompass(Region r) {
@@ -53,6 +82,9 @@ public class RegionPostItemWatcher implements Listener {
       List<String> lore = new ArrayList<String>();
       lore.add("Right click to locate the nearest Region Post");
       if (r == null) {
+          meta.setDisplayName(ChatColor.DARK_PURPLE + "Region Compass");
+          lore.add("Tracking: " + ChatColor.MAGIC + "NOWHERE IN PARTICULAR");
+          lore.add("Coordinates: " + ChatColor.MAGIC + "0000" + ChatColor.RESET + ", " + ChatColor.MAGIC + "0000");
       } else {
           CompassMeta compassMeta = (CompassMeta)meta;
           compassMeta.setDisplayName(ChatColor.DARK_PURPLE + "Region Compass (" + r.coloredName() + ChatColor.RESET + ChatColor.DARK_PURPLE + ")");
