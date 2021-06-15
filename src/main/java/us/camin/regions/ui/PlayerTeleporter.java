@@ -41,7 +41,7 @@ public class PlayerTeleporter {
         Random rand = new Random();
 
         Vector travelVec = m_dest.toVector().subtract(m_src.toVector()).normalize();
-        double angleDelta = (Math.PI / 3) * (rand.nextGaussian() - 0.5) * (1-accuracy);
+        double angleDelta = (Math.PI / 5) * (rand.nextGaussian() - 0.5) * (1-accuracy);
         travelVec.rotateAroundY(angleDelta);
 
         double distanceToDest = m_src.distance(m_dest);
