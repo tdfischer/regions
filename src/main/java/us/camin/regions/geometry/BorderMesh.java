@@ -24,23 +24,31 @@ public class BorderMesh {
     Map<Region, Polygon> m_polygons;
     Map<Region, Set<Region>> m_neighbors;
 
+    // TODO: Probably need to cache the neighbors after doing all this
+    // intersection work! Should be generated during triangulate()
     public Collection<Region> neighbors(Region region) {
         Collection<Region> ret = new ArrayList<Region>();
         if (m_neighbors.containsKey(region)) {
             Collection<Region> allNeighbors = m_neighbors.get(region);
-            if (false /*isFrontier(region)*/) {
-                //log.trace("Region " + region.name() + " is a frontier");
-                for(Region neighbor : allNeighbors) {
-                    if (!isFrontier(neighbor)) {
-                        ret.add(neighbor);
-                    } else {
-                        //log.trace("Not linking " + region.name() + " to " + neighbor.name() + " as it is also a frontier");
+            for(Region neighbor : allNeighbors) {
+                int crossings = 0;
+                Vector2D start = new Vector2D(region.location().getBlockX(), region.location().getBlockZ());
+                Vector2D neighborEnd = new Vector2D(neighbor.location().getBlockX(), neighbor.location().getBlockZ());
+                for(Region distantNeighbor : m_regions) {
+                  if (distantNeighbor.equals(neighbor)) {
+                    continue;
+                  }
+                  Polygon poly = m_polygons.get(distantNeighbor);
+                  for(Polygon.Segment edge : poly.segments()) {
+                    // Check if the line from region->neighbor intersects with
+                    // any polygon
+                    if (doIntersect(start, neighborEnd, edge.start, edge.end)) {
+                      crossings++;
                     }
+                  }
                 }
-            } else {
-                //log.trace("Region " + region.name() + " is not a frontier");
-                for(Region neighbor : allNeighbors) {
-                    ret.add(neighbor);
+                if (crossings == 1 || crossings == 0) {
+                  ret.add(neighbor);
                 }
             }
         }
@@ -57,6 +65,24 @@ public class BorderMesh {
         public double x[];
         public double y[];
         public double z[];
+
+        public class Segment {
+          public Vector2D start;
+          public Vector2D end;
+          public Segment(Vector2D start, Vector2D end) {
+            this.start = start;
+            this.end = end;
+          }
+        }
+
+        public List<Segment> segments() {
+            List<Segment> ret = new ArrayList<Segment>();
+            for(int i = 0; i < x.length-1; i++) {
+              ret.add(new Segment(new Vector2D(x[i], z[i]), new Vector2D(x[i+1], z[i+1])));
+            }
+            ret.add(new Segment(new Vector2D(x[x.length-1], z[z.length-1]), new Vector2D(x[0], z[0])));
+            return ret;
+        }
 
         public Polygon(List<Vector2D> points) {
             x = new double[points.size()];
@@ -91,6 +117,27 @@ public class BorderMesh {
           }
           return crossings;
         }
+    }
+
+    private int orientation(Vector2D p, Vector2D q, Vector2D r) {
+      int val = (int)((q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y));
+      if (val == 0) return 0; // colinear
+      return (val > 0) ? 1 : 2; // Clockwise or counter-clockwise
+    }
+
+    private boolean doIntersect(Vector2D p1, Vector2D q1, Vector2D p2, Vector2D q2) {
+      int o1 = orientation(p1, q1, p2);
+      int o2 = orientation(p1, q1, q2);
+      int o3 = orientation(p2, q2, p1);
+      int o4 = orientation(p2, q2, q1);
+
+      if (o1 != o2 && o3 != o4) {
+        return true;
+      }
+
+      // It probably isn't possible to generate a route that is colinear with a
+      // region border, so assume it isn't intersecting.
+      return false;
     }
 
     public Polygon polygonForRegion(Region r) {
@@ -187,16 +234,6 @@ public class BorderMesh {
             return true;
         }
     }*/
-
-    public boolean isFrontier(Region region) {
-        Polygon poly = polygonForRegion(region);
-        Location center = region.location();
-        if (poly.contains(center.getBlockX(), center.getBlockZ())) {
-            return false;
-        } else {
-            return true;
-        }
-    }
 
     private boolean vecEquals(Vector2D a, Vector2D b) {
 	    return a.x == b.x && a.y == b.y;
