@@ -4,7 +4,7 @@
 	<groupId>us.camin.regions</groupId>
 	<artifactId>Regions</artifactId>
 	<packaging>jar</packaging>
-	<version>0.2.99-rc5</version>
+	<version>0.2.99-rc6</version>
 	<name>regions</name>
 	<url>http://maven.apache.org</url>
 	<properties>
