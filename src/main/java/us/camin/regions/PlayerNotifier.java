@@ -35,7 +35,6 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.wrappers.EnumWrappers.TitleAction;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
 
-import com.destroystokyo.paper.Title;
 import java.util.logging.Logger;
 
 import us.camin.regions.events.PlayerMoveInEvent;
@@ -126,9 +125,7 @@ public class PlayerNotifier implements Listener {
             }
           } else {
             //FIXME: also show pop/alt subtitle
-            Title title = new Title.Builder().title("Region Discovered").subtitle(event.region.name()).build();
-            event.player.sendMessage("You discovered the region " + event.region.name());
-            event.player.sendTitle(title);
+            event.player.sendTitle("Region Discovered", "You discovered the region " + event.region.coloredName());
           }
 
           // TODO: Make this configurable and disablable
