@@ -91,17 +91,10 @@ public class DynmapEventRelay implements Listener {
             log.info("Could not generate polygon for region " + region.name());
             continue;
         }
-        boolean isFrontier = geom.isFrontier(region);
-        if (!isFrontier) {
-            AreaMarker marker = m_borderSet.createAreaMarker(null, region.name(), false, world.getName(), polygon.x, polygon.z, false);
-            marker.setFillStyle(0.7, region.color().getColor().asRGB());
-            marker.setLineStyle(2, 0.8, region.color().getColor().asRGB());
-            m_borderMarkers.get(world).add(marker);
-        } else {
-            PolyLineMarker marker = m_borderSet.createPolyLineMarker(null, region.name(), false, world.getName(), polygon.x, polygon.y, polygon.z, false);
-            marker.setLineStyle(2, 0.5, region.color().getColor().asRGB());
-            m_borderMarkers.get(world).add(marker);
-        }
+        AreaMarker marker = m_borderSet.createAreaMarker(null, region.name(), false, world.getName(), polygon.x, polygon.z, false);
+        marker.setFillStyle(0.7, region.color().getColor().asRGB());
+        marker.setLineStyle(2, 0.8, region.color().getColor().asRGB());
+        m_borderMarkers.get(world).add(marker);
 
         // Add a line between each region, for teleportations
         double thickness = Math.max(1, Math.log(geom.neighbors(region).size()) * 2.75);
@@ -109,9 +102,13 @@ public class DynmapEventRelay implements Listener {
             double x[] = { neighbor.location().getBlockX(), region.location().getBlockX() };
             double y[] = { 64, 64 };
             double z[] = { neighbor.location().getBlockZ(), region.location().getBlockZ() };
-            PolyLineMarker marker = m_routesSet.createPolyLineMarker(null, null, false, world.getName(), x, y, z, false);
-            marker.setLineStyle((int)Math.ceil(thickness), 0.5, region.color().getColor().asRGB());
-            m_borderMarkers.get(world).add(marker);
+            String label = neighbor.name() + " / " + region.name();
+            String description = "<p>Travel Cost to " + neighbor.name() + ": " + region.getTravelCost(neighbor) + "</p>";
+            description += "<p>Travel Cost to " + region.name() + ": " + neighbor.getTravelCost(region) + "</p>";
+            PolyLineMarker routeMarker = m_routesSet.createPolyLineMarker(null, label, true, world.getName(), x, y, z, false);
+            routeMarker.setDescription(description);
+            routeMarker.setLineStyle((int)Math.ceil(thickness), 0.5, region.color().getColor().asRGB());
+            m_borderMarkers.get(world).add(routeMarker);
         }
 	    }
     }
@@ -119,11 +116,17 @@ public class DynmapEventRelay implements Listener {
     private void createMarkerForRegion(Region region) {
         Location loc = region.location();
         MarkerIcon icon = m_api.getMarkerIcon("compass");
+        if (region.isHub()) {
+          icon = m_api.getMarkerIcon("world");
+        }
         CircleMarker circleMarker = m_routesSet.createCircleMarker(null, region.name(), false, loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ(), 60, 60, false);
         Marker marker = m_centerSet.createMarker(null, region.name(), loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ(), icon, false);
         circleMarker.setFillStyle(0.75, region.color().getColor().asRGB());
         circleMarker.setLineStyle(0, 0, 0);
         String desc = "<h2>" + region.name() + "</h2>";
+        if (region.isHub()) {
+          desc += "<p><strong>World Hub</strong></p>";
+        }
         marker.setDescription(desc);
         circleMarker.setDescription(desc);
     }
