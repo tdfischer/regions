@@ -20,31 +20,28 @@ package us.camin.regions.ui;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Optional;
-import java.util.Random;
+
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.ChatColor;
 import org.bukkit.event.Event.Result;
-import org.bukkit.DyeColor;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.Sound;
-import org.bukkit.Particle;
 import org.bukkit.entity.Player;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.Block;
 import org.bukkit.Location;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.CompassMeta;
-import org.bukkit.inventory.meta.BannerMeta;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.util.ChatPaginator;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.Material;
-import org.bukkit.material.MaterialData;
-import org.bukkit.util.Vector;
+import org.bukkit.NamespacedKey;
 
 import us.camin.regions.Plugin;
 import us.camin.regions.Region;
@@ -59,6 +56,12 @@ import java.util.Collection;
 import java.lang.Math;
 
 public class PlayerInventoryTeleporter implements Listener {
+
+	/** The maximum line length of the nearby neighbor list tooltip. */
+	private static final int REGION_LENGTH_LIMIT = 48;
+
+	private static final NamespacedKey FULL_NAME_KEY = new NamespacedKey(Plugin.getPlugin(Plugin.class), "FULL_REGION_NAME");
+
     Map<Player, Inventory> m_playerInventories;
     Plugin m_plugin;
     RegionManager m_manager;
@@ -98,7 +101,7 @@ public class PlayerInventoryTeleporter implements Listener {
                 m_plugin.getServer().getScheduler().runTask(m_plugin, () -> event.getView().close());
                 Region nearest = m_manager.nearestRegion(player.getLocation());
 
-                final String selectedName = meta.getDisplayName();
+                final String selectedName = meta.getPersistentDataContainer().get(FULL_NAME_KEY, PersistentDataType.STRING);
                 final Optional<Region> destination = m_plugin.regionManager().regionsForWorld(player.getLocation().getWorld())
                   .stream()
                   .filter((r) -> r.name().equals(selectedName))
@@ -140,8 +143,8 @@ public class PlayerInventoryTeleporter implements Listener {
         Inventory neighborInventory = m_playerInventories.get(event.player);
         neighborInventory.clear();
 
-        ArrayList<Region> sorted = new ArrayList<Region>();
-        ArrayList<String> foundNames = new ArrayList<String>();
+        List<Region> sorted = new ArrayList<Region>();
+        List<String> foundNames = new ArrayList<String>();
         Region nearest = m_manager.nearestRegion(event.player.getLocation());
         for(Region r : nearby) {
             if (!r.name().equals(nearest.name())) {
@@ -167,7 +170,10 @@ public class PlayerInventoryTeleporter implements Listener {
               item = new ItemStack(Material.BEDROCK);
             }
             ItemMeta meta = item.getItemMeta();
-            meta.setDisplayName(region.name());
+
+            String regionName = region.name();
+            meta.getPersistentDataContainer().set(FULL_NAME_KEY, PersistentDataType.STRING, regionName);
+            meta.setDisplayName(truncate(region.name()));
             ArrayList<String> lore = new ArrayList<String>();
             Location center = region.location();
             int altitude = center.getBlockY();
@@ -196,9 +202,11 @@ public class PlayerInventoryTeleporter implements Listener {
                     neighborNames.add(r.coloredName());
                 }
               }
-              lore.add("Nearby connections: " + String.join(", ", neighborNames));
+              lore.add("Nearby connections:");
+              lore.addAll(limit(String.join(",", neighborNames)));
+              
               if (event.player.getLevel() < cost) {
-                lore.add("" + ChatColor.RED + ChatColor.BOLD + "You don't have enough XP! Travel may be dangerous...");
+                lore.add("" + ChatColor.RED + ChatColor.BOLD + "Not enough XP! Travel may be dangerous...");
               }
             } else {
               lore.add("" + ChatColor.BOLD + ChatColor.GOLD + "You haven't discovered this location yet!");
@@ -214,7 +222,7 @@ public class PlayerInventoryTeleporter implements Listener {
         ItemStack chargesItem = new ItemStack(event.region.charges() == 0 ? Material.SOUL_LANTERN : Material.LANTERN);
         ItemMeta meta = chargesItem.getItemMeta();
         meta.setDisplayName(ChatColor.BOLD + "Region Post Configuration");
-        ArrayList<String> lore = new ArrayList<String>();
+        List<String> lore = new ArrayList<String>();
         lore.add(ChatColor.WHITE + "Name: "+event.region.coloredName());
         lore.add(ChatColor.WHITE + "Visits: " + ChatColor.YELLOW + event.region.visits());
         lore.add(ChatColor.WHITE + "Charges remaining: " + (event.region.charges() == 0 ? ChatColor.RED : ChatColor.GREEN) + event.region.charges());
@@ -226,5 +234,32 @@ public class PlayerInventoryTeleporter implements Listener {
         neighborInventory.setItem(22, chargesItem);
 
         event.player.openInventory(neighborInventory);
+    }
+
+    /**
+     * Wraps the given input to a maximum length per line.
+     * {@link ChatPaginator#wordWrap(String, int)} has an issue where it will only
+     * carry a single style forward via ChatColor attributes, so text which has
+     * multiple styles applied will only take the most recently set style.
+     * 
+     * @param input	The input, most likely a single string of neighbors.
+     * @return		A wrapped set of strings, with the last color attribute carried forward.
+     */
+    private static List<String> limit(String input) {
+    	List<String> output = new LinkedList<>();
+    	output.addAll(Arrays.asList(ChatPaginator.wordWrap(input, REGION_LENGTH_LIMIT)));
+    	return output;
+    }
+
+    /**
+     * Truncates a string to a maximum length specified by {@link #REGION_LENGTH_LIMIT}.
+     * @param input The input to truncate
+     * @return		Either the original value or a truncated String which ends with "..." depending on the total length.
+     */
+    private static String truncate(String input) {
+    	if (input.length() > REGION_LENGTH_LIMIT && input.length() > 3) {
+    		return input.substring(0, REGION_LENGTH_LIMIT - 3) + "...";
+    	}
+    	return input;
     }
 }
