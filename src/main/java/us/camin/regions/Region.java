@@ -148,23 +148,43 @@ public class Region {
       m_charges += charges;
     }
 
+    /**
+     * Travel should cost:
+     * <ul>
+     * <li>0 XP levels between hubs</li>
+     * <li>1 XP level if the player is leaving a hub</li>
+     * <li>A scaling amount of XP for the rest, halved if the destination is a hub.</li>
+     * </ul>
+     * @param destination	The region the player is traveling to
+     * @return				The amount of XP to deduct from the player
+     */
     public int getTravelCost(Region destination) {
+      if (isHub() && destination.isHub()) {
+         return 0;
+      } else if (isHub()) {
+    	  return 1;
+      }
       int baseCost = getBaseTravelCost(destination);
+      if (baseCost == 0) {
+    	  return baseCost;
+      }
       if (destination.isHub()) {
           // Travel *to* a hub is 50% cheaper, before charges applied
           baseCost /= 2;
       }
-      return Math.max(1, (int)(baseCost / (Math.min(4, m_charges + 1))));
+      return Math.max(1, (int)(baseCost / (Math.min(4, charges() + 1))));
     }
 
+    /**
+     * Computes the raw cost to teleport between two regions, in XP levels.
+     * 
+     * NOTE: This computation does not include any discounts for hub-based transit,
+     * nor does it compute any charge-based discounts.
+     * 
+     * @param destination	The region being traveled to
+     * @return				The base cost in XP levels to travel to the given region without any discounts applied
+     */
     public int getBaseTravelCost(Region destination) {
-      if (m_isHub && destination.isHub()) {
-        // Free travel between hubs
-        return 0;
-      } else if (m_isHub) {
-        // Max cost 1 level for travel *from* a hub
-        return 1;
-      }
       double distance = teleportLocation().distance(destination.teleportLocation());
       double blocksPerXP = 500;
       return Math.max(1, (int)(distance / blocksPerXP));
